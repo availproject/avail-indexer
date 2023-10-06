@@ -1,0 +1,33 @@
+{
+  "name": "avail-indexer",
+  "version": "1.0.0",
+  "description": "Indexer for the various Avail chains",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "subql build",
+    "codegen": "subql codegen",
+    "start:docker": "docker-compose pull && docker-compose up --remove-orphans",
+    "dev": "subql codegen && subql build && docker-compose pull && docker-compose up --remove-orphans",
+    "prepack": "rm -rf dist && npm run build",
+    "test": "subql build && subql-node test"
+  },
+  "homepage": "https://github.com/availproject/avail-indexer",
+  "repository": "github:availproject/avail-indexer",
+  "files": [
+    "dist",
+    "schema.graphql",
+    "project.yaml"
+  ],
+  "author": "Leouarz",
+  "devDependencies": {
+    "@subql/types": "latest",
+    "@subql/testing": "latest",
+    "@subql/node": "latest",
+    "@polkadot/api": "^10",
+    "typescript": "^4.1.3",
+    "@subql/cli": "latest"
+  },
+  "resolutions": {
+    "ipfs-unixfs": "6.0.6"
+  }
+}

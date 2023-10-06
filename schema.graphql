@@ -1,0 +1,107 @@
+type SpecVersion @entity {
+  id: ID! #specVersion
+  blockHeight: BigInt!
+}
+
+type Block @entity {
+  id: ID!
+  number: Int! @index
+  hash: String! @index(unique: true)
+  timestamp: Date! @index(unique: true)
+  parentHash: String!
+  stateRoot: String!
+  extrinsicsRoot: String!
+  runtimeVersion: Int!
+  nbExtrinsics: Int!
+  author: String @index
+  sessionId: Int @index
+  finalized: Boolean!
+}
+
+type Session @entity {
+  id: ID!
+  validators: [String]!
+}
+
+type Extrinsic @entity {
+  id: ID!
+  block: Block!
+  txHash: String! @index(unique: true)
+  module: String! @index
+  call: String! @index
+  blockHeight: BigInt! @index
+  success: Boolean!
+  isSigned: Boolean!
+  extrinsicIndex: Int!
+  hash: String! @index(unique: true)
+  timestamp: Date! @index
+  description: ExtrinsicDescription!
+  signer: String! @index
+  signature: String!
+  fees: String
+  feesRounded: Float
+  nonce: Int!
+  argsName: [String]!
+  argsValue: [String]!
+  nbEvents: Int!
+}
+
+type ExtrinsicDescription @entity {
+  id: ID!
+  module: String!
+  call: String!
+  description: String!
+}
+
+type Event @entity {
+  id: ID!
+  block: Block!
+  extrinsicId: String
+  module: String! @index
+  event: String! @index
+  blockHeight: BigInt! @index
+  eventIndex: Int!
+  call: String! @index
+  description: EventDescription!
+  argsName: [String]!
+  argsValue: [String]!
+}
+
+type EventDescription @entity {
+  id: ID!
+  module: String!
+  call: String!
+  description: String!
+}
+
+type Log @entity {
+  id: ID!
+  block: Block!
+  type: String!
+  engine: String
+  data: String!
+}
+
+type HeaderExtension @entity {
+  id: ID!
+  block: Block!
+  version: String
+}
+
+type Commitment @entity {
+  id: ID!
+  block: Block!
+  headerExtension: HeaderExtension!
+  rows: Int
+  cols: Int
+  dataRoot: String
+  commitment: String
+}
+
+type AppLookup @entity {
+  id: ID!
+  block: Block!
+  headerExtension: HeaderExtension!
+  size: Int
+  index: String
+}
