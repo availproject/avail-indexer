@@ -4,6 +4,16 @@
 
 **This SubQuery project indexes all asset transfers using the balances pallet on the Polkadot Network**
 
+## Tl;Dr
+```bash
+npm install -g @subql/cli
+npm install
+npm run codegen
+npm run build
+docker-compose pull
+docker-compose up --remove-orphans
+```
+
 ## Start
 
 First, install SubQuery CLI globally on your terminal by using NPM `npm install -g @subql/cli`
@@ -50,35 +60,99 @@ You can observe the three services start, and once all are running (it may take 
 For this project, you can try to query with the following GraphQL code to get a taste of how it works.
 
 ```graphql
+# Query blocks (events, logs, ... can be called separately)
 {
-  query {
-    transfers(first: 5, orderBy: BLOCK_NUMBER_DESC) {
-      totalCount
-      nodes {
-        id
-        date
-        blockNumber
-        toId
-        fromId
-        amount
+  blocks(first: 10, orderBy: TIMESTAMP_DESC) {
+    nodes {
+      number
+      hash
+      parentHash
+      stateRoot
+      timestamp
+      runtimeVersion
+      extrinsics {
+        nodes {
+          module
+          call
+        }
       }
-    }
-    accounts(first: 5, orderBy: SENT_TRANSFERS_COUNT_DESC) {
-      nodes {
-        id
-        sentTransfers(first: 5, orderBy: BLOCK_NUMBER_DESC) {
-          totalCount
-          nodes {
-            id
-            toId
-            amount
+      events {
+        nodes {
+          module
+          call
+        }
+      }
+      logs {
+        nodes {
+          type
+          engine
+          data
+        }
+      }
+      headerExtensions {
+        nodes {
+          version
+          commitments {
+            nodes {
+              rows
+              cols
+              dataRoot
+              commitment
+            }
           }
         }
-        lastTransferBlock
       }
+    }
+  }
+}
+# Query session and validators
+{
+  sessions(
+    filter: {
+      id: {equalTo: "2907"}
+    }
+    first: 10
+    orderBy: ID_DESC
+  ) {
+    totalCount
+    nodes {
+      id
+      validators
+    }
+  }
+}
+# Query accounts
+{
+  accountEntities(
+    filter: { id: { in: ["5CwCDQKRyPnrSHcmxbS9cEDGb4YQxaVrbQmw9RH5yBR9Xnh5"] } }
+  ) {
+    nodes {
+      id
+      amount
+      amountTotal
+      amountRounded
+      amountTotalRounded
     }
   }
 }
 ```
 
-You can explore the different possible queries and entities to help you with GraphQL using the documentation draw on the right.
+You can explore the different possible queries and entities to help you with GraphQL using the documentation drawer on the right (schema and docs).
+
+
+## Get help from chat GPT (Change the query between "")
+Giving this example requests : 
+
+```graphql
+# Copy paste the examples from "Query your project" section
+```
+
+And this schema : 
+```graphql
+# Copy the content of schema.graphql here
+```
+And the fact that foreign key such as "Block" becomes blockId in a query
+
+Can you generate me a query to : 
+
+"query the first 10 extrinsics where the call is "submitData" ordered by blockId desc ?" 
