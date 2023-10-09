@@ -1,8 +1,9 @@
 import { EventRecord, Digest, Header } from "@polkadot/types/interfaces"
 import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
 import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup } from "../types";
-import { checkIfExtrinsicExecuteSuccess, getFees, roundPrice, shouldGetFees } from "../utils/extrinsic";
-import { wrapExtrinsics } from "../utils";
+import { checkIfExtrinsicExecuteSuccess, getFees, shouldGetFees } from "../utils/extrinsic";
+import { wrapExtrinsics, roundPrice } from "../utils";
+import { transferHandler, updateAccounts } from "../utils/balances";
 
 let specVersion: SpecVersion;
 
@@ -17,7 +18,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       const calls = wrappedExtrinsics.map((ext, idx) => handleCall(`${blockNumber.toString()}-${idx}`, ext));
       const events = block.events.map((evt, idx) => {
         const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
-        return handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex)
+        return handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp)
       });
       await Promise.all([
         store.bulkCreate('Event', await Promise.all(events)),
@@ -109,7 +110,7 @@ export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Pr
   }
 }
 
-export async function handleEvent(blockNumber: string, eventIdx: number, event: EventRecord, extrinsicId: number): Promise<Event> {
+export async function handleEvent(blockNumber: string, eventIdx: number, event: EventRecord, extrinsicId: number, blockHash: string, timestamp: Date): Promise<Event> {
   try {
     const eventData = event.event
     const documentation = eventData.meta.docs ? eventData.meta.docs : JSON.parse(JSON.stringify(eventData.meta)).documentation
@@ -144,6 +145,9 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
       ),
     );
     if (extrinsicId !== -1) newEvent.extrinsicId = `${blockNumber}-${extrinsicId}`
+    
+    await handleAccountsAndTransfers(event, blockNumber, blockHash, timestamp, newEvent.extrinsicId || "")
+
     return newEvent;
   } catch (err) {
     logger.error('record event error at block number:' + blockNumber.toString());
@@ -258,5 +262,31 @@ export const handleExtension = async (blockHeader: Header) => {
     appLookupRecord.size = data.appLookup.size
     appLookupRecord.index = JSON.stringify(data.appLookup.index)
     await appLookupRecord.save()
+  }
+}
+
+export const handleAccountsAndTransfers = async (event: EventRecord, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string) => {
+  const balanceEvents = [
+    "balances.BalanceSet",
+    "balances.Deposit",
+    "balances.DustLost",
+    "balances.Endowed",
+    "balances.Reserved",
+    "balances.Slashed",
+    "balances.Unreserved",
+    "balances.Withdraw",
+  ]
+  const feeEvents = ["transactionPayment.TransactionFeePaid"]
+  const transferEvents = ["balances.Transfer"]
+
+  const key = `${event.event.section}.${event.event.method}`
+
+  if ([...balanceEvents, ...feeEvents].includes(key)) {
+    const [who] = event.event.data
+    await updateAccounts([who.toString()])
+  }
+
+  if (transferEvents.includes(key)) {
+    await transferHandler(event, blockId, blockHash, timestamp, extrinsicIndex)
   }
 }

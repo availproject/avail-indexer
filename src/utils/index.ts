@@ -31,3 +31,20 @@ function getExtrinsicSuccess(events: EventRecord[]): boolean {
         events.findIndex((evt) => evt.event.method === 'ExtrinsicSuccess') > -1
     );
 }
+
+export const isNumeric = (str: string) => {
+	if (typeof str != "string") return false
+	return !isNaN(str as unknown as number) && !isNaN(parseFloat(str))
+}
+
+export const roundPrice = (amount : string) => {
+	try{
+		if (!amount || amount.length === 0 || !isNumeric(amount)) throw new Error()
+		const divider = 1000000000000000000
+		const parsedPrice = (parseInt(amount)/divider).toFixed(3)
+	    const roundedPrice = (parseFloat(parsedPrice)*100)/100;
+		return roundedPrice
+	}catch{
+		return 0
+	}
+}

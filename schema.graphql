@@ -105,3 +105,28 @@ type AppLookup @entity {
   size: Int
   index: String
 }
+
+type TransferEntity @entity {
+  id: ID!
+  blockId: String!
+  blockHash: String!
+  extrinsicId: String!
+  timestamp: Date!
+  from: String!
+  to: String!
+  currency: String!
+  amount: String!
+  amountRounded: Float!
+}
+
+type AccountEntity @entity {
+  id: ID!
+  amount: String
+  amountFrozen: String
+  amountTotal: String
+  amountRounded: Float
+  amountFrozenRounded: Float
+  amountTotalRounded: Float
+  createdAt: Date!
+  updatedAt: Date!
+}
