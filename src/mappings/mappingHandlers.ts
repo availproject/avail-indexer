@@ -1,9 +1,10 @@
-import { EventRecord, Digest, Header } from "@polkadot/types/interfaces"
+import { EventRecord, Digest, Header, AccountId } from "@polkadot/types/interfaces"
 import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
 import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup } from "../types";
 import { checkIfExtrinsicExecuteSuccess, getFees, shouldGetFees } from "../utils/extrinsic";
 import { wrapExtrinsics, roundPrice } from "../utils";
 import { transferHandler, updateAccounts } from "../utils/balances";
+import { extractAuthor } from "../utils/author";
 
 let specVersion: SpecVersion;
 
@@ -49,7 +50,7 @@ export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersi
     )
     await Promise.all([
       handleLogs(blockHeader.number.toString(), blockHeader.digest),
-      updateSession(blockRecord),
+      updateSession(blockRecord, blockHeader.digest),
       updateSpecversion(specVersion, block.specVersion, blockHeader.number.toBigInt()),
       handleExtension(blockHeader)
     ])
@@ -145,7 +146,7 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
       ),
     );
     if (extrinsicId !== -1) newEvent.extrinsicId = `${blockNumber}-${extrinsicId}`
-    
+
     await handleAccountsAndTransfers(event, blockNumber, blockHash, timestamp, newEvent.extrinsicId || "")
 
     return newEvent;
@@ -192,7 +193,7 @@ export const saveLog = async (blockNumber: string, index: number, type: string, 
   await logRecord.save()
 }
 
-export const updateSession = async (blockRecord: Block) => {
+export const updateSession = async (blockRecord: Block, digest: Digest) => {
   try {
     const sessionId = await api.query.session.currentIndex()
     let sessionRecord = await Session.get(sessionId.toString())
@@ -202,6 +203,8 @@ export const updateSession = async (blockRecord: Block) => {
       await sessionRecord.save()
     }
     blockRecord.sessionId = Number(sessionRecord.id)
+    const author = extractAuthor(digest, sessionRecord.validators as unknown as AccountId[])
+    blockRecord.author = author ? author.toString() : undefined
   } catch (err) {
     logger.error('update session error');
     logger.error('update session error detail:' + err);
