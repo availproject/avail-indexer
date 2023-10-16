@@ -39,8 +39,8 @@ services:
       - --unfinalized-blocks=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://subquery-node:3000/ready"]
-      interval: 3s
-      timeout: 5s
+      interval: 10s
+      timeout: 50s
       retries: 10
 
   graphql-engine:
@@ -50,8 +50,8 @@ services:
     depends_on:
       "postgres":
         condition: service_healthy
-      "subquery-node":
-        condition: service_healthy
+      # "subquery-node":
+      #   condition: service_healthy
     restart: always
     environment:
       DB_USER: postgres
