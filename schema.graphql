@@ -121,6 +121,7 @@ type TransferEntity @entity {
 
 type AccountEntity @entity {
   id: ID!
+  validator: Boolean
   amount: String
   amountFrozen: String
   amountTotal: String

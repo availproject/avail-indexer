@@ -1,6 +1,6 @@
 import { EventRecord, Digest, Header, AccountId } from "@polkadot/types/interfaces"
 import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
-import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup } from "../types";
+import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity } from "../types";
 import { checkIfExtrinsicExecuteSuccess, getFees, shouldGetFees } from "../utils/extrinsic";
 import { wrapExtrinsics, roundPrice } from "../utils";
 import { transferHandler, updateAccounts } from "../utils/balances";
@@ -80,6 +80,11 @@ export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Pr
       logger.info('new extrinsic description recorded')
     }
 
+    const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
+      methodData.args.map((a, i) => i === 0 ? a.toString().slice(0, 64) : a.toString())
+      :
+      methodData.args.map((a) => a.toString())
+
     const extrinsicRecord = new Extrinsic(
       idx,
       block.block.header.number.toString(),
@@ -97,7 +102,7 @@ export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Pr
       ext.signature.toString(),
       ext.nonce.toNumber(),
       methodData.meta.args.map(a => a.name.toString()),
-      methodData.args.map((a) => a.toString()),
+      argsValue,
       extrinsic.events.length
     );
     extrinsicRecord.fees = shouldGetFees(extrinsicRecord.module) ? await getFees(ext.toHex(), block.block.header.hash.toHex()) : ""
@@ -127,6 +132,11 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
       logger.info('new event description recorded')
     }
 
+    const argsValue = `${eventData.section}_${eventData.method}` === "dataAvailability_DataSubmitted" ?
+      eventData.data.map((a, i) => i === 1 ? a.toString().slice(0, 64) : a.toString())
+      :
+      eventData.data.map((a) => a.toString())
+
     const newEvent = new Event(
       `${blockNumber}-${eventIdx}`,
       blockNumber.toString(),
@@ -137,13 +147,7 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
       eventData.method,
       descriptionRecord.id,
       eventData.meta.args.map(a => a.toString()),
-      eventData.data.map(a => JSON.stringify(a).indexOf('u0000') === -1 ?
-        a.toString()
-        :
-        JSON.stringify(a).split("u0000").join('')
-          .split("\\").join('')
-          .split("\"").join('')
-      ),
+      argsValue
     );
     if (extrinsicId !== -1) newEvent.extrinsicId = `${blockNumber}-${extrinsicId}`
 
@@ -201,6 +205,7 @@ export const updateSession = async (blockRecord: Block, digest: Digest) => {
       const validators = (await api.query.session.validators()) as unknown as string[]
       sessionRecord = new Session(sessionId.toString(), validators.map(x => x.toString()))
       await sessionRecord.save()
+      await setAccountsAsValidators(validators)
     }
     blockRecord.sessionId = Number(sessionRecord.id)
     const author = extractAuthor(digest, sessionRecord.validators as unknown as AccountId[])
@@ -278,6 +283,7 @@ export const handleAccountsAndTransfers = async (event: EventRecord, blockId: st
     "balances.Slashed",
     "balances.Unreserved",
     "balances.Withdraw",
+    "balances.Upgraded",
   ]
   const feeEvents = ["transactionPayment.TransactionFeePaid"]
   const transferEvents = ["balances.Transfer"]
@@ -291,5 +297,17 @@ export const handleAccountsAndTransfers = async (event: EventRecord, blockId: st
 
   if (transferEvents.includes(key)) {
     await transferHandler(event, blockId, blockHash, timestamp, extrinsicIndex)
+  }
+}
+
+export const setAccountsAsValidators = async (accounts: string[]) => {
+  const updatedAcc = []
+  for (const acc of accounts) {
+    let dbAccount = await AccountEntity.get(acc)
+    if (dbAccount) {
+      dbAccount.validator = true
+      updatedAcc.push(dbAccount)
+      await dbAccount.save()
+    }
   }
 }
