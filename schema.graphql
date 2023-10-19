@@ -122,6 +122,7 @@ type TransferEntity @entity {
 type AccountEntity @entity {
   id: ID!
   validator: Boolean
+  validatorSessionParticipated: Int
   amount: String
   amountFrozen: String
   amountTotal: String
@@ -130,4 +131,11 @@ type AccountEntity @entity {
   amountTotalRounded: Float
   createdAt: Date!
   updatedAt: Date!
+}
+
+type DataSubmission @entity {
+  id: ID!
+  extrinsicId: String!
+  timestamp: Date!
+  byteSize: Int!
 }

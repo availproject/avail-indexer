@@ -1,6 +1,6 @@
 import { EventRecord, Digest, Header, AccountId } from "@polkadot/types/interfaces"
 import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
-import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity } from "../types";
+import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity, DataSubmission } from "../types";
 import { checkIfExtrinsicExecuteSuccess, getFees, shouldGetFees } from "../utils/extrinsic";
 import { wrapExtrinsics, roundPrice } from "../utils";
 import { transferHandler, updateAccounts } from "../utils/balances";
@@ -80,10 +80,24 @@ export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Pr
       logger.info('new extrinsic description recorded')
     }
 
-    const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
-      methodData.args.map((a, i) => i === 0 ? a.toString().slice(0, 64) : a.toString())
+    const isDataSubmission = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData"
+    let dataSubmissionSize: number | undefined = undefined
+
+    const argsValue = isDataSubmission ?
+      methodData.args.map((a, i) => {
+        if (i === 0) {
+          dataSubmissionSize = Math.ceil(a.toString().length / 2)
+          return a.toString().slice(0, 64)
+        } else {
+          return a.toString()
+        }
+      })
       :
       methodData.args.map((a) => a.toString())
+
+    if (isDataSubmission && dataSubmissionSize && dataSubmissionSize > 0) {
+      await handleDataSubmission(idx, block.timestamp, dataSubmissionSize)
+    }
 
     const extrinsicRecord = new Extrinsic(
       idx,
@@ -182,11 +196,11 @@ export const handleLogs = async (blockNumber: string, digest: Digest) => {
     else if (log.isAuthoritiesChange) data = log.asAuthoritiesChange.toString()
     else if (log.isChangesTrieRoot) data = log.asAuthoritiesChange.toString()
 
-    await saveLog(blockNumber, i, log.type, engine, data)
+    await handleLog(blockNumber, i, log.type, engine, data)
   }
 }
 
-export const saveLog = async (blockNumber: string, index: number, type: string, engine: string | undefined, data: string) => {
+export const handleLog = async (blockNumber: string, index: number, type: string, engine: string | undefined, data: string) => {
   const logRecord = new Log(
     `${blockNumber}-${index}`,
     blockNumber,
@@ -306,8 +320,19 @@ export const setAccountsAsValidators = async (accounts: string[]) => {
     let dbAccount = await AccountEntity.get(acc)
     if (dbAccount) {
       dbAccount.validator = true
+      dbAccount.validatorSessionParticipated = (dbAccount.validatorSessionParticipated || 0) + 1
       updatedAcc.push(dbAccount)
       await dbAccount.save()
     }
   }
+}
+
+export const handleDataSubmission = async (extrinsicId: string, timestamp: Date, byteSize: number) => {
+  const dataSubmissionRecord = new DataSubmission(
+    extrinsicId,
+    extrinsicId,
+    timestamp,
+    byteSize
+  )
+  await dataSubmissionRecord.save()
 }
