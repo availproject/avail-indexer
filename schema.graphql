@@ -138,4 +138,6 @@ type DataSubmission @entity {
   extrinsicId: String!
   timestamp: Date!
   byteSize: Int!
+  appId: Int!
+  signer: String!
 }

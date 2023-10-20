@@ -5,6 +5,7 @@ import { checkIfExtrinsicExecuteSuccess, getFees, shouldGetFees } from "../utils
 import { wrapExtrinsics, roundPrice } from "../utils";
 import { transferHandler, updateAccounts } from "../utils/balances";
 import { extractAuthor } from "../utils/author";
+import { formatInspect } from "../utils/inspect";
 
 let specVersion: SpecVersion;
 
@@ -16,18 +17,27 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
     if (!dbBlock) {
       await blockHandler(block, specVersion)
       const wrappedExtrinsics = wrapExtrinsics(block)
-      const calls = wrappedExtrinsics.map((ext, idx) => handleCall(`${blockNumber.toString()}-${idx}`, ext));
+      const calls: Promise<Extrinsic>[] = []
+      const daSubmissions: (DataSubmission | undefined)[] = []
+      wrappedExtrinsics.map((ext, idx) => {
+        const call = handleCall(`${blockNumber.toString()}-${idx}`, ext)
+        calls.push(call)
+        const daSubmission = handleDataSubmission(`${blockNumber.toString()}-${idx}`, ext)
+        daSubmissions.push(daSubmission)
+      });
       const events = block.events.map((evt, idx) => {
         const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
         return handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp)
       });
       await Promise.all([
         store.bulkCreate('Event', await Promise.all(events)),
-        store.bulkCreate('Extrinsic', await Promise.all(calls))
+        store.bulkCreate('Extrinsic', await Promise.all(calls)),
+        store.bulkCreate('DataSubmission', daSubmissions.filter(x => x !== undefined) as DataSubmission[])
       ]);
     }
-  } catch (err) {
-    logger.error(`record block error at :  and block nb ${block.block.header.number.toNumber()}`);
+  } catch (err: any) {
+    logger.error(`record block error at block nb ${block.block.header.number.toNumber()}`);
+    logger.error(err.toString());
   }
 }
 
@@ -80,24 +90,10 @@ export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Pr
       logger.info('new extrinsic description recorded')
     }
 
-    const isDataSubmission = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData"
-    let dataSubmissionSize: number | undefined = undefined
-
-    const argsValue = isDataSubmission ?
-      methodData.args.map((a, i) => {
-        if (i === 0) {
-          dataSubmissionSize = Math.ceil(a.toString().length / 2)
-          return a.toString().slice(0, 64)
-        } else {
-          return a.toString()
-        }
-      })
+    const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
+      methodData.args.map((a, i) => i === 0 ? a.toString().slice(0, 64) : a.toString())
       :
       methodData.args.map((a) => a.toString())
-
-    if (isDataSubmission && dataSubmissionSize && dataSubmissionSize > 0) {
-      await handleDataSubmission(idx, block.timestamp, dataSubmissionSize)
-    }
 
     const extrinsicRecord = new Extrinsic(
       idx,
@@ -172,6 +168,36 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
     logger.error('record event error at block number:' + blockNumber.toString());
     logger.error('record event error detail:' + err);
     throw err
+  }
+}
+
+export function handleDataSubmission(idx: string, extrinsic: SubstrateExtrinsic): DataSubmission | undefined {
+  const block = extrinsic.block
+  const ext = extrinsic.extrinsic
+  const methodData = ext.method
+  const isDataSubmission = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData"
+
+  let dataSubmissionSize: number | undefined = undefined
+
+  if (isDataSubmission) {
+    dataSubmissionSize = methodData.args.length > 0 ? methodData.args[0].toString().length / 2 : 0
+    if (dataSubmissionSize > 0) {
+      const formattedInspect = formatInspect(ext.inspect())
+      const appIdInspect = formattedInspect.find(x => x.name === "appId")
+      const appId = appIdInspect ? Number(appIdInspect.value) : 0
+      const dataSubmissionRecord = new DataSubmission(
+        idx,
+        idx,
+        block.timestamp,
+        dataSubmissionSize,
+        appId,
+        ext.signer.toString()
+      )
+      logger.info(`New data submission recorded with appId ${appId}`)
+      return dataSubmissionRecord
+    }
+  } else {
+    return undefined
   }
 }
 
@@ -325,14 +351,4 @@ export const setAccountsAsValidators = async (accounts: string[]) => {
       await dbAccount.save()
     }
   }
-}
-
-export const handleDataSubmission = async (extrinsicId: string, timestamp: Date, byteSize: number) => {
-  const dataSubmissionRecord = new DataSubmission(
-    extrinsicId,
-    extrinsicId,
-    timestamp,
-    byteSize
-  )
-  await dataSubmissionRecord.save()
 }

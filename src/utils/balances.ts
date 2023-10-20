@@ -1,25 +1,46 @@
 import { EventRecord } from "@polkadot/types/interfaces"
-import { AccountInfo, Balance } from "@polkadot/types/interfaces"
+import { Balance } from "@polkadot/types/interfaces"
 import { roundPrice } from ".";
 import { AccountEntity, TransferEntity } from "../types";
 
+type AccountData = {
+    free: Balance;
+    reserved: Balance;
+    frozen: Balance;
+    miscFrozen: Balance; // Old structure
+    feeFrozen: Balance; // Old structure
+}
+
 export const updateAccounts = async (addresses: string[]) => {
     try {
-        const res = await api.query.system.account.multi(addresses) as unknown as AccountInfo[]
+        const res = await api.query.system.account.multi(addresses) as any
         await Promise.all(
-            res.map(async ({ data: balance }, idx) => {
+            res.map(async ({ data: balance }: { data: AccountData }, idx: number) => {
                 if (balance) {
-                    const { feeFrozen, free, miscFrozen, reserved } = balance
+                    const { feeFrozen, free, miscFrozen, reserved, frozen } = balance
                     const address = addresses[idx]
                     const date = new Date()
-                    const balanceFrozenMisc = miscFrozen.toBigInt()
-                    const balanceFrozenFee = feeFrozen.toBigInt()
-                    const balanceFrozen = balanceFrozenFee > balanceFrozenMisc ? balanceFrozenFee : balanceFrozenMisc
+
+                    let balanceFrozen: bigint | undefined = undefined
+                    if (frozen) {
+                        balanceFrozen = frozen.toBigInt()
+                    } else {
+                        if (miscFrozen && feeFrozen) {
+                            const balanceFrozenMisc = miscFrozen.toBigInt()
+                            const balanceFrozenFee = feeFrozen.toBigInt()
+                            balanceFrozen = balanceFrozenFee > balanceFrozenMisc ? balanceFrozenFee : balanceFrozenMisc
+                        } else if (miscFrozen) {
+                            balanceFrozen = miscFrozen.toBigInt()
+                        } else if (feeFrozen) {
+                            balanceFrozen = feeFrozen.toBigInt()
+                        }
+                    }
+
                     const balanceReserved = reserved.toBigInt()
                     const balanceFree = free.toBigInt()
-                    const amountFrozen = balanceFrozen.toString()
+                    const amountFrozen = balanceFrozen ? balanceFrozen.toString() : "0"
                     const amountTotal = (balanceFree + balanceReserved).toString()
-                    const amount = (balanceFree - balanceFrozen).toString()
+                    const amount = balanceFrozen ? (balanceFree - balanceFrozen).toString() : balanceFree.toString()
                     let record = await AccountEntity.get(address)
                     if (record === undefined) {
                         record = new AccountEntity(address, date, date)
@@ -33,7 +54,7 @@ export const updateAccounts = async (addresses: string[]) => {
                     record.updatedAt = date
                     await record.save()
                 } else {
-                    logger.error("Error in update accout : Balance not found")
+                    logger.warning("Error in update accout : Balance not found")
                 }
             }),
         )
