@@ -332,7 +332,7 @@ export const handleAccountsAndTransfers = async (event: EventRecord, blockId: st
 
   if ([...balanceEvents, ...feeEvents].includes(key)) {
     const [who] = event.event.data
-    await updateAccounts([who.toString()])
+    await updateAccounts([who.toString()], timestamp)
   }
 
   if (transferEvents.includes(key)) {

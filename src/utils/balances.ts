@@ -11,7 +11,7 @@ type AccountData = {
     feeFrozen: Balance; // Old structure
 }
 
-export const updateAccounts = async (addresses: string[]) => {
+export const updateAccounts = async (addresses: string[], timestamp: Date) => {
     try {
         const res = await api.query.system.account.multi(addresses) as any
         await Promise.all(
@@ -43,7 +43,7 @@ export const updateAccounts = async (addresses: string[]) => {
                     const amount = balanceFrozen ? (balanceFree - balanceFrozen).toString() : balanceFree.toString()
                     let record = await AccountEntity.get(address)
                     if (record === undefined) {
-                        record = new AccountEntity(address, date, date)
+                        record = new AccountEntity(address, date, date, timestamp)
                     }
                     record.amount = amount
                     record.amountFrozen = amountFrozen
@@ -80,5 +80,5 @@ export const transferHandler = async (event: EventRecord, blockId: string, block
         roundPrice(formattedAmount)
     )
     await record.save()
-    await updateAccounts([to.toString()])
+    await updateAccounts([to.toString()], timestamp)
 }

@@ -131,6 +131,7 @@ type AccountEntity @entity {
   amountTotalRounded: Float
   createdAt: Date!
   updatedAt: Date!
+  timestampCreation: Date!
 }
 
 type DataSubmission @entity {
