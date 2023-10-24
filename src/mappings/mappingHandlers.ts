@@ -18,7 +18,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       await blockHandler(block, specVersion)
       const wrappedExtrinsics = wrapExtrinsics(block)
       const calls: Promise<Extrinsic>[] = []
-      const daSubmissions: (DataSubmission | undefined)[] = []
+      const daSubmissions: Promise<(DataSubmission | undefined)>[] = []
       wrappedExtrinsics.map((ext, idx) => {
         const call = handleCall(`${blockNumber.toString()}-${idx}`, ext)
         calls.push(call)
@@ -32,7 +32,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       await Promise.all([
         store.bulkCreate('Event', await Promise.all(events)),
         store.bulkCreate('Extrinsic', await Promise.all(calls)),
-        store.bulkCreate('DataSubmission', daSubmissions.filter(x => x !== undefined) as DataSubmission[])
+        store.bulkCreate('DataSubmission', (await Promise.all(daSubmissions)).filter(x => x !== undefined) as DataSubmission[])
       ]);
     }
   } catch (err: any) {
@@ -171,11 +171,14 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
   }
 }
 
-export function handleDataSubmission(idx: string, extrinsic: SubstrateExtrinsic): DataSubmission | undefined {
+export async function handleDataSubmission(idx: string, extrinsic: SubstrateExtrinsic): Promise<DataSubmission | undefined> {
   const block = extrinsic.block
   const ext = extrinsic.extrinsic
   const methodData = ext.method
   const isDataSubmission = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData"
+
+  const fees = shouldGetFees(methodData.section) ? await getFees(ext.toHex(), block.block.header.hash.toHex()) : ""
+  const feesRounded = fees ? roundPrice(fees) : undefined
 
   let dataSubmissionSize: number | undefined = undefined
 
@@ -193,6 +196,12 @@ export function handleDataSubmission(idx: string, extrinsic: SubstrateExtrinsic)
         appId,
         ext.signer.toString()
       )
+      if (feesRounded) {
+        dataSubmissionRecord.fees = feesRounded
+        const oneMbInBytes = 1_048_576;
+        const feesPerMb = (feesRounded / dataSubmissionSize) * (oneMbInBytes);
+        dataSubmissionRecord.feesPerMb = feesPerMb
+      }
       logger.info(`New data submission recorded with appId ${appId}`)
       return dataSubmissionRecord
     }

@@ -141,4 +141,6 @@ type DataSubmission @entity {
   byteSize: Int!
   appId: Int!
   signer: String!
+  fees: Float
+  feesPerMb: Float
 }
