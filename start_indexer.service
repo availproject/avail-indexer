@@ -1,0 +1,12 @@
+[Unit]
+Description=Start Indexer Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/path/to/start_indexer.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

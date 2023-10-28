@@ -156,3 +156,9 @@ And the fact that foreign key such as "Block" becomes blockId in a query
 Can you generate me a query to : 
 
 "query the first 10 extrinsics where the call is "submitData" ordered by blockId desc ?" 
+
+## When changing the service file
+- Put the file in `/etc/systemd/system/`
+- `sudo systemctl daemon-reload`
+- `sudo systemctl enable start_indexer.service`
+- `sudo systemctl start start_indexer.service`
