@@ -21,7 +21,7 @@
         },
         "HeaderExtension": {
             "_enum": {
-                "V1": "V1HeaderExtension",
+                "V1": "V1HeaderExtension"
             }
         },
         "DaHeader": {
