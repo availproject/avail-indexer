@@ -6,9 +6,6 @@ if ! command -v npm &> /dev/null; then
   curl -fsSL https://npmjs.org/install.sh | sh -
 fi
 
-# Change to the cloned repository directory (assuming you are already in the right directory)
-cd avail-indexer
-
 # Checkout the main branch and pull the latest changes
 echo "Checking out the main branch and pulling latest changes..."
 git checkout main
