@@ -15,9 +15,14 @@ schema:
   file: ./schema.graphql
 network:
   # The genesis hash of the network (hash of block 0)
-  chainId: "0xd12003ac837853b062aaccca5ce87ac4838c48447e41db4a3dcfb5bf312350c6" # Kate
+  # chainId: "0xd12003ac837853b062aaccca5ce87ac4838c48447e41db4a3dcfb5bf312350c6" # Kate
+  # endpoint:
+  #   ["wss://kate.avail.tools/ws"]
+  
+  # The genesis hash of the network (hash of block 0)
+  chainId: "<blockhash>" # Kate
   endpoint:
-    ["wss://kate.avail.tools/ws"]
+    ["<ws-endpoint>"]
   chaintypes:
     file: ./types.json
     # If the network it Kate use type legacy

@@ -14,6 +14,11 @@ docker-compose pull
 docker-compose up --remove-orphans
 ```
 
+Or you can use this one-liner which will install dependencies and setup the the indexer after taking user inputs for websocket endpoint and genesis hash.
+```bash
+curl -s https://raw.githubusercontent.com/availproject/avail-indexer/blob/main/setup_indexer.sh -o setup_indexer.sh && bash setup_indexer.sh
+``` 
+
 ## Start
 
 First, install SubQuery CLI globally on your terminal by using NPM `npm install -g @subql/cli`
