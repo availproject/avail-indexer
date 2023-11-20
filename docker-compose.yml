@@ -36,7 +36,7 @@ services:
       - -f=/app
       - --db-schema=avail-indexer
       - --workers=4
-      - --unfinalized-blocks=true
+      - --unfinalized-blocks=false
     healthcheck:
       test: ["CMD", "curl", "-f", "http://subquery-node:3000/ready"]
       interval: 10s
