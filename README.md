@@ -37,15 +37,15 @@ Although this is a working example SubQuery project, you can edit the SubQuery p
 
 SubQuery supports various layer-1 blockchain networks and provides [dedicated quick start guides](https://academy.subquery.network/quickstart/quickstart.html) as well as [detailed technical documentation](https://academy.subquery.network/build/introduction.html) for each of them.
 
-For `Kate Testnet`:
+For `Goldberg network`:
 ```yaml
- genesisHash: '0xd12003ac837853b062aaccca5ce87ac4838c48447e41db4a3dcfb5bf312350c6'
- endpoint: 'wss://kate.avail.tools/ws'
+ genesisHash: '0x6f09966420b2608d1947ccfb0f2a362450d1fc7fd902c29b67c906eaa965a7ae'
+ endpoint: 'wss://goldberg.avail.tools/ws'
 ```
-For `Biryani Devnet`:
+For `Couscous network`:
 ```yaml
- genesisHash: '0x25b7a5d31af1def763db74809b08794c4eb2121c531f8fd8458555be487bebda'
- endpoint: 'wss://biryani-devnet.avail.tools/ws'
+ genesisHash: '0x870e903076fe2bec249cc31fdb1b5717d89d0a0b6ae38241a58d6edeac5e1859'
+ endpoint: 'wss://couscous-devnet.avail.tools/ws'
 ```
 
 ## Run your project

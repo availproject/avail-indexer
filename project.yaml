@@ -15,18 +15,18 @@ schema:
   file: ./schema.graphql
 network:
   # The genesis hash of the network (hash of block 0)
-  # chainId: "0xd12003ac837853b062aaccca5ce87ac4838c48447e41db4a3dcfb5bf312350c6" # Kate
+  # chainId: "0x6f09966420b2608d1947ccfb0f2a362450d1fc7fd902c29b67c906eaa965a7ae" # Goldberg
+  # chainId: "0x870e903076fe2bec249cc31fdb1b5717d89d0a0b6ae38241a58d6edeac5e1859" # Couscous
   # endpoint:
-  #   ["wss://kate.avail.tools/ws"]
+  #   ["wss://goldberg.avail.tools/ws"]
+  #   ["wss://couscous-devnet.avail.tools/ws"]
   
   # The genesis hash of the network (hash of block 0)
-  chainId: "<blockhash>" # Kate
+  chainId: "<blockhash>"
   endpoint:
     ["<ws-endpoint>"]
   chaintypes:
     file: ./types.json
-    # If the network it Kate use type legacy
-    # file: ./types_legacy.json
 dataSources:
   - kind: substrate/Runtime
     startBlock: 0
