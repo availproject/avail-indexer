@@ -51,7 +51,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Cloning the indexer repo
-git clone https://github.com/kaustubhkapatral/avail-indexer.git ~/avail-indexer
+git clone https://github.com/availproject/avail-indexer.git ~/avail-indexer
 cd ~/avail-indexer
 
 # Changing values of genesis hash and ws endpoint in project.yaml file
