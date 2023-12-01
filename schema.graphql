@@ -65,6 +65,7 @@ type Event @entity {
   description: EventDescription!
   argsName: [String]!
   argsValue: [String]!
+  timestamp: Date! @index
 }
 
 type EventDescription @entity {
@@ -108,15 +109,15 @@ type AppLookup @entity {
 
 type TransferEntity @entity {
   id: ID!
-  blockId: String!
+  blockId: String! @index
   blockHash: String!
   extrinsicId: String!
-  timestamp: Date!
-  from: String!
-  to: String!
+  timestamp: Date! @index
+  from: String! @index
+  to: String! @index
   currency: String!
   amount: String!
-  amountRounded: Float!
+  amountRounded: Float! @index
 }
 
 type AccountEntity @entity {
@@ -126,21 +127,21 @@ type AccountEntity @entity {
   amount: String
   amountFrozen: String
   amountTotal: String
-  amountRounded: Float
-  amountFrozenRounded: Float
-  amountTotalRounded: Float
+  amountRounded: Float @index
+  amountFrozenRounded: Float @index
+  amountTotalRounded: Float @index
   createdAt: Date!
   updatedAt: Date!
-  timestampCreation: Date!
+  timestampCreation: Date! @index
 }
 
 type DataSubmission @entity {
   id: ID!
   extrinsicId: String!
-  timestamp: Date!
-  byteSize: Int!
-  appId: Int!
-  signer: String!
+  timestamp: Date! @index
+  byteSize: Int! @index
+  appId: Int! @index
+  signer: String! @index
   fees: Float
-  feesPerMb: Float
+  feesPerMb: Float @index
 }

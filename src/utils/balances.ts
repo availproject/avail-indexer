@@ -64,11 +64,11 @@ export const updateAccounts = async (addresses: string[], timestamp: Date) => {
     }
 }
 
-export const transferHandler = async (event: EventRecord, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string) => {
+export const transferHandler = async (event: EventRecord, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string, eventIndex: number) => {
     const [from, to, amount] = event.event.data
     const formattedAmount = !(typeof amount === "string") ? (amount as Balance).toBigInt().toString() : amount
     const record = new TransferEntity(
-        `${blockId}-${event.event.index}`,
+        `${blockId}-${eventIndex}`,
         blockId,
         blockHash,
         extrinsicIndex,

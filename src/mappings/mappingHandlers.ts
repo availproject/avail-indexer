@@ -157,11 +157,12 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
       eventData.method,
       descriptionRecord.id,
       eventData.meta.args.map(a => a.toString()),
-      argsValue
+      argsValue,
+      timestamp
     );
     if (extrinsicId !== -1) newEvent.extrinsicId = `${blockNumber}-${extrinsicId}`
 
-    await handleAccountsAndTransfers(event, blockNumber, blockHash, timestamp, newEvent.extrinsicId || "")
+    await handleAccountsAndTransfers(event, eventIdx, blockNumber, blockHash, timestamp, newEvent.extrinsicId || "")
 
     return newEvent;
   } catch (err) {
@@ -322,7 +323,7 @@ export const handleExtension = async (blockHeader: Header) => {
   }
 }
 
-export const handleAccountsAndTransfers = async (event: EventRecord, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string) => {
+export const handleAccountsAndTransfers = async (event: EventRecord, eventIdx: number, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string) => {
   const balanceEvents = [
     "balances.BalanceSet",
     "balances.Deposit",
@@ -345,7 +346,7 @@ export const handleAccountsAndTransfers = async (event: EventRecord, blockId: st
   }
 
   if (transferEvents.includes(key)) {
-    await transferHandler(event, blockId, blockHash, timestamp, extrinsicIndex)
+    await transferHandler(event, blockId, blockHash, timestamp, extrinsicIndex, eventIdx)
   }
 }
 
