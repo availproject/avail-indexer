@@ -49,12 +49,12 @@ For `Couscous network`:
 ```
 For `Local network`:
 ```yaml
- genesisHash: '0x19f02da4c80d51eb1ea0f4c1e95b5c8e7e218400b7117b311d317eb12943e83e'
+ genesisHash: '<local_chain_genesis_hash>'
  endpoint: 'ws://127.0.0.1:9944'
 ```
 For `Local network` with docker:
 ```yaml
- genesisHash: '0x19f02da4c80d51eb1ea0f4c1e95b5c8e7e218400b7117b311d317eb12943e83e'
+ genesisHash: '<local_chain_genesis_hash>'
  endpoint: 'ws://host.docker.internal:9944
 ```
 
