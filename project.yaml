@@ -17,8 +17,8 @@ network:
   # The genesis hash of the network (hash of block 0)
   # chainId: "0x6f09966420b2608d1947ccfb0f2a362450d1fc7fd902c29b67c906eaa965a7ae" # Goldberg
   # chainId: "0x870e903076fe2bec249cc31fdb1b5717d89d0a0b6ae38241a58d6edeac5e1859" # Couscous
-  # chainId: "0x19f02da4c80d51eb1ea0f4c1e95b5c8e7e218400b7117b311d317eb12943e83e" # Local
-  # chainId: "0x19f02da4c80d51eb1ea0f4c1e95b5c8e7e218400b7117b311d317eb12943e83e" # Local with Docker
+  # chainId: "<local_chain_genesis_hash>"                                         # Local
+  # chainId: "<local_chain_genesis_hash>"                                         # Local with Docker
   # endpoint:
   #   ["wss://goldberg.avail.tools/ws"]
   #   ["wss://couscous-devnet.avail.tools/ws"]
