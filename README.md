@@ -47,6 +47,16 @@ For `Couscous network`:
  genesisHash: '0x870e903076fe2bec249cc31fdb1b5717d89d0a0b6ae38241a58d6edeac5e1859'
  endpoint: 'wss://couscous-devnet.avail.tools/ws'
 ```
+For `Local network`:
+```yaml
+ genesisHash: '0x19f02da4c80d51eb1ea0f4c1e95b5c8e7e218400b7117b311d317eb12943e83e'
+ endpoint: 'ws://127.0.0.1:9944'
+```
+For `Local network` with docker:
+```yaml
+ genesisHash: '0x19f02da4c80d51eb1ea0f4c1e95b5c8e7e218400b7117b311d317eb12943e83e'
+ endpoint: 'ws://host.docker.internal:9944
+```
 
 ## Run your project
 
@@ -140,6 +150,34 @@ For this project, you can try to query with the following GraphQL code to get a 
     }
   }
 }
+# Query extrinsics by hash
+{
+  extrinsics(
+    filter: { txHash: { equalTo: "0x06d846527915a9098ac1c995804d1ca37fdf03b51988932a1cf22459e672af1b" } }
+    first: 10
+  ) {
+    nodes {
+      id
+      txHash
+      module
+      call
+      blockHeight
+      success
+      isSigned
+      extrinsicIndex
+      hash
+      timestamp
+      signer
+      signature
+      fees
+      nonce
+      argsName
+      argsValue
+      nbEvents
+    }
+  }
+}
+
 ```
 
 You can explore the different possible queries and entities to help you with GraphQL using the documentation drawer on the right (schema and docs).
