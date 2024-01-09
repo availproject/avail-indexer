@@ -12,7 +12,6 @@ let specVersion: SpecVersion;
 export async function handleBlock(block: SubstrateBlock): Promise<void> {
   try {
     const blockNumber = block.block.header.number.toNumber()
-    if (blockNumber % 100 === 0) logger.info("Handling block with specversion " + block.specVersion)
     const dbBlock = await Block.get(blockNumber.toString())
     if (!dbBlock) {
       await blockHandler(block, specVersion)
@@ -45,7 +44,6 @@ export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersi
   try {
     const blockHeader = block.block.header
     const blockExtrinsics = block.block.extrinsics
-    // if (blockHeader.number.toNumber() % 100 === 0) logger.info(`Time ${blockHeader.number.toString()}: ${new Date()}`);
     const blockRecord = new Block(
       blockHeader.number.toString(),
       blockHeader.number.toNumber(),
