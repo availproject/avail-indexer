@@ -1,16 +1,34 @@
 import { EventRecord, Digest, Header, AccountId } from "@polkadot/types/interfaces"
 import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
 import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity, DataSubmission } from "../types";
-import { checkIfExtrinsicExecuteSuccess, getFees, shouldGetFees } from "../utils/extrinsic";
-import { wrapExtrinsics, roundPrice } from "../utils";
+import { getFees, shouldGetFees } from "../utils/extrinsic";
+import { roundPrice } from "../utils";
 import { transferHandler, updateAccounts } from "../utils/balances";
 import { extractAuthor } from "../utils/author";
 import { formatInspect } from "../utils/inspect";
 
 let specVersion: SpecVersion;
 
-const excludeExtrinsics = ["system_remark", "system_remarkWithEvent", "timestamp_set"]
-const excludeEvents = ["system_Remarked", "utility_ItemCompleted"]
+// Those extrinsics will be excluded from indexer
+export const excludeExtrinsics: string[] = []
+// Those events will be excluded from indexer
+export const excludeEvents: string[] = ["system_Remarked", "utility_ItemCompleted"]
+// The events in those extrinsics will be excluded
+export const excludeEventsInExtrinsics: string[] =  ["system_remark", "system_remarkWithEvent"]
+
+export const balanceEvents = [
+  "balances.BalanceSet",
+  "balances.Deposit",
+  "balances.DustLost",
+  "balances.Endowed",
+  "balances.Reserved",
+  "balances.Slashed",
+  "balances.Unreserved",
+  "balances.Withdraw",
+  "balances.Upgraded",
+]
+export const feeEvents = ["transactionPayment.TransactionFeePaid"]
+export const transferEvents = ["balances.Transfer"]
 
 export async function handleBlock(block: SubstrateBlock): Promise<void> {
   try {
@@ -20,34 +38,62 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       // Generic block
       await blockHandler(block, specVersion)
 
-      // Extrinsics
-      const wrappedExtrinsics = wrapExtrinsics(block)
+      const events: Promise<Event>[] = []
       const calls: Promise<Extrinsic>[] = []
       const daSubmissions: Promise<DataSubmission>[] = []
       const validExtId: number[] = []
-      wrappedExtrinsics.map((ext, idx) => {
-        const extrinsic = ext.extrinsic
+      const validEvents: [EventRecord, number][] = []
+      const extIdToDetails: { [key: number]: { nbEvents: number, success?: boolean } } = {}
+      const accountToUpdate: string[] = []
+
+      // Events count / setup / First filtering
+      block.events.map((evt, idx) => {
+        let eventType = `${evt.event.section}_${evt.event.method}`
+        const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
+        if (extIdToDetails[relatedExtrinsicIndex] === undefined) {
+          extIdToDetails[relatedExtrinsicIndex] = {
+            nbEvents: 0
+          }
+        }
+        extIdToDetails[relatedExtrinsicIndex].nbEvents += 1
+        if (evt.event.method === 'ExtrinsicSuccess') extIdToDetails[relatedExtrinsicIndex].success = true
+        if (!excludeEvents.includes(eventType)) {
+          validEvents.push([evt, idx])
+        }
+      })
+
+      // Extrinsics
+      block.block.extrinsics.map((extrinsic, idx) => {
         const methodData = extrinsic.method
         const extrinsicType = `${methodData.section}_${methodData.method}`
         if (!excludeExtrinsics.includes(extrinsicType)) {
           const isDataSubmission = extrinsicType === "dataAvailability_submitData"
-          validExtId.push(idx)
-          const call = handleCall(`${blockNumber.toString()}-${idx}`, ext)
-          calls.push(call)
-          if (isDataSubmission) {
-            const daSubmission = handleDataSubmission(`${blockNumber.toString()}-${idx}`, ext)
-            daSubmissions.push(daSubmission)
-          }
-        }
-      });
+          if (!excludeEventsInExtrinsics.includes(extrinsicType)) validExtId.push(idx)
 
-      // Events
-      const events: Promise<Event>[] = []
-      block.events.map((evt, idx) => {
-        let eventType = `${evt.event.section}_${evt.event.method}`
+          // We use this instead of "wrapExtrinsic" to avoid looping on events
+          const substrateExtrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'> = {
+            idx,
+            extrinsic,
+            block,
+          }
+
+          calls.push(handleCall(`${blockNumber.toString()}-${idx}`, substrateExtrinsic, extIdToDetails[idx]))
+          if (isDataSubmission) daSubmissions.push(handleDataSubmission(`${blockNumber.toString()}-${idx}`, substrateExtrinsic))
+        }
+      })
+
+      // Events mapping and second filtering
+      validEvents.map(([evt, idx]) => {
+        const key = `${evt.event.section}.${evt.event.method}`
         const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
-        if (!excludeEvents.includes(eventType) && (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex))) {
+        if (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex)) {
           events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
+          // Handle account updates
+          if ([...balanceEvents, ...feeEvents].includes(key)) {
+            const [who] = evt.event.data
+            const account = who.toString()
+            if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
+          }
         }
       });
 
@@ -55,7 +101,8 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       await Promise.all([
         store.bulkCreate('Event', await Promise.all(events)),
         store.bulkCreate('Extrinsic', await Promise.all(calls)),
-        store.bulkCreate('DataSubmission', (await Promise.all(daSubmissions)).filter(x => x !== undefined) as DataSubmission[])
+        store.bulkCreate('DataSubmission', await Promise.all(daSubmissions)),
+        updateAccounts(accountToUpdate, block.timestamp)
       ]);
     }
   } catch (err: any) {
@@ -92,7 +139,11 @@ export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersi
   }
 }
 
-export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Promise<Extrinsic> {
+export async function handleCall(
+  idx: string,
+  extrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'>,
+  extraDetails: { nbEvents: number, success?: boolean | undefined } | undefined
+): Promise<Extrinsic> {
   try {
     const block = extrinsic.block
     const ext = extrinsic.extrinsic
@@ -123,7 +174,7 @@ export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Pr
       methodData.section,
       methodData.method,
       block.block.header.number.toBigInt(),
-      checkIfExtrinsicExecuteSuccess(extrinsic),
+      extraDetails?.success || false,
       ext.isSigned,
       extrinsic.idx,
       ext.hash.toString(),
@@ -134,7 +185,7 @@ export async function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Pr
       ext.nonce.toNumber(),
       methodData.meta.args.map(a => a.name.toString()),
       argsValue,
-      extrinsic.events.length
+      extraDetails?.nbEvents || 0
     );
     extrinsicRecord.fees = shouldGetFees(extrinsicRecord.module) ? await getFees(ext.toHex(), block.block.header.hash.toHex()) : ""
     extrinsicRecord.feesRounded = extrinsicRecord.fees ? roundPrice(extrinsicRecord.fees) : undefined
@@ -183,7 +234,7 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
     );
     if (extrinsicId !== -1) newEvent.extrinsicId = `${blockNumber}-${extrinsicId}`
 
-    await handleAccountsAndTransfers(event, eventIdx, blockNumber, blockHash, timestamp, newEvent.extrinsicId || "")
+    await transferHandler(event, blockNumber, blockHash, timestamp, newEvent.extrinsicId || "", eventIdx)
 
     return newEvent;
   } catch (err) {
@@ -193,7 +244,7 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
   }
 }
 
-export async function handleDataSubmission(idx: string, extrinsic: SubstrateExtrinsic): Promise<DataSubmission> {
+export async function handleDataSubmission(idx: string, extrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'>): Promise<DataSubmission> {
   const block = extrinsic.block
   const ext = extrinsic.extrinsic
   const methodData = ext.method
@@ -332,33 +383,6 @@ export const handleExtension = async (blockHeader: Header) => {
     appLookupRecord.size = data.appLookup.size
     appLookupRecord.index = JSON.stringify(data.appLookup.index)
     await appLookupRecord.save()
-  }
-}
-
-export const handleAccountsAndTransfers = async (event: EventRecord, eventIdx: number, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string) => {
-  const balanceEvents = [
-    "balances.BalanceSet",
-    "balances.Deposit",
-    "balances.DustLost",
-    "balances.Endowed",
-    "balances.Reserved",
-    "balances.Slashed",
-    "balances.Unreserved",
-    "balances.Withdraw",
-    "balances.Upgraded",
-  ]
-  const feeEvents = ["transactionPayment.TransactionFeePaid"]
-  const transferEvents = ["balances.Transfer"]
-
-  const key = `${event.event.section}.${event.event.method}`
-
-  if ([...balanceEvents, ...feeEvents].includes(key)) {
-    const [who] = event.event.data
-    await updateAccounts([who.toString()], timestamp)
-  }
-
-  if (transferEvents.includes(key)) {
-    await transferHandler(event, blockId, blockHash, timestamp, extrinsicIndex, eventIdx)
   }
 }
 

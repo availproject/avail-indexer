@@ -1,6 +1,7 @@
 import { EventRecord } from "@polkadot/types/interfaces"
 import { Balance } from "@polkadot/types/interfaces"
 import { roundPrice } from ".";
+import { transferEvents } from "../mappings/mappingHandlers";
 import { AccountEntity, TransferEntity } from "../types";
 
 type AccountData = {
@@ -65,20 +66,23 @@ export const updateAccounts = async (addresses: string[], timestamp: Date) => {
 }
 
 export const transferHandler = async (event: EventRecord, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string, eventIndex: number) => {
-    const [from, to, amount] = event.event.data
-    const formattedAmount = !(typeof amount === "string") ? (amount as Balance).toBigInt().toString() : amount
-    const record = new TransferEntity(
-        `${blockId}-${eventIndex}`,
-        blockId,
-        blockHash,
-        extrinsicIndex,
-        timestamp,
-        from.toString(),
-        to.toString(),
-        "AVL",
-        formattedAmount,
-        roundPrice(formattedAmount)
-    )
-    await record.save()
-    await updateAccounts([to.toString()], timestamp)
+    const key = `${event.event.section}.${event.event.method}`
+    if (transferEvents.includes(key)) {
+        const [from, to, amount] = event.event.data
+        const formattedAmount = !(typeof amount === "string") ? (amount as Balance).toBigInt().toString() : amount
+        const record = new TransferEntity(
+            `${blockId}-${eventIndex}`,
+            blockId,
+            blockHash,
+            extrinsicIndex,
+            timestamp,
+            from.toString(),
+            to.toString(),
+            "AVL",
+            formattedAmount,
+            roundPrice(formattedAmount)
+        )
+        await record.save()
+        await updateAccounts([to.toString()], timestamp)
+    }
 }
