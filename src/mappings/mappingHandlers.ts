@@ -10,11 +10,11 @@ import { formatInspect } from "../utils/inspect";
 let specVersion: SpecVersion;
 
 // Those extrinsics will be excluded from indexer
-export const excludeExtrinsics: string[] = []
+export const excludeExtrinsics: string[] = ["system_remark", "system_remarkWithEvent"]
 // Those events will be excluded from indexer
 export const excludeEvents: string[] = ["system_Remarked", "utility_ItemCompleted"]
 // The events in those extrinsics will be excluded
-export const excludeEventsInExtrinsics: string[] =  ["system_remark", "system_remarkWithEvent"]
+export const excludeEventsInExtrinsics: string[] =  []
 
 export const balanceEvents = [
   "balances.BalanceSet",

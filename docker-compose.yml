@@ -35,9 +35,9 @@ services:
       # - ${SUB_COMMAND} # set SUB_COMMAND env variable to "test" to run tests
       - -f=/app
       - --db-schema=avail-indexer
-      - --workers=4
+      - --workers=2
       - --unfinalized-blocks=false
-      - --batch-size=8
+      - --batch-size=4
       - --timeout=45000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://subquery-node:3000/ready"]
