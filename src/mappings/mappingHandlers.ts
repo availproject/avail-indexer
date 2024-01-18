@@ -360,6 +360,10 @@ export const handleExtension = async (blockHeader: Header) => {
       headerExtensionRecord.version = "v2"
       data = extension.v2
     }
+    if (extension.v3 !== undefined) {
+      headerExtensionRecord.version = "v3"
+      data = extension.v3
+    }
     await headerExtensionRecord.save()
 
     // Create commitment
