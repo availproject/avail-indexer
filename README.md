@@ -40,7 +40,7 @@ SubQuery supports various layer-1 blockchain networks and provides [dedicated qu
 For `Goldberg network`:
 ```yaml
  genesisHash: '0x6f09966420b2608d1947ccfb0f2a362450d1fc7fd902c29b67c906eaa965a7ae'
- endpoint: 'wss://goldberg.avail.tools/ws'
+ endpoint: 'wss://rpc-testnet.avail.tools/ws'
 ```
 For `Couscous network`:
 ```yaml
