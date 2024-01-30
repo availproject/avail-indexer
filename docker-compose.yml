@@ -19,9 +19,6 @@ services:
 
   subquery-node:
     image: onfinality/subql-node:v3.0.4
-    # depends_on:
-    #   "postgres":
-    #     condition: service_healthy
     restart: always
     environment:
       DB_USER: postgres
@@ -35,10 +32,13 @@ services:
       # - ${SUB_COMMAND} # set SUB_COMMAND env variable to "test" to run tests
       - -f=/app
       - --db-schema=avail-indexer
-      - --workers=2
       - --unfinalized-blocks=false
-      - --batch-size=4
-      - --timeout=45000
+      # - --workers=1
+      # - --batch-size=1
+      # - --profiler
+      # - --timeout=600000
+      - --subscription
+      # - --unsafe
     healthcheck:
       test: ["CMD", "curl", "-f", "http://subquery-node:3000/ready"]
       interval: 10s
@@ -49,11 +49,6 @@ services:
     image: onfinality/subql-query:v2.5.0
     ports:
       - 3000:3000
-    # depends_on:
-      # "postgres":
-      #   condition: service_healthy
-      # "subquery-node":
-      #   condition: service_healthy
     restart: always
     environment:
       DB_USER: postgres

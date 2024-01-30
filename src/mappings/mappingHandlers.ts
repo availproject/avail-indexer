@@ -97,30 +97,13 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         }
       });
 
-      // Save in db in sequential
-      logger.info(`Storing all events - ${events.length}`)
-      await store.bulkCreate('Event', await Promise.all(events))
-      logger.info(`Done events`)
-
-      logger.info(`Storing all calls - ${calls.length}`)
-      await store.bulkCreate('Extrinsic', await Promise.all(calls))
-      logger.info(`Done calls`)
-
-      logger.info(`Storing all events - ${daSubmissions.length}`)
-      await store.bulkCreate('DataSubmission', await Promise.all(daSubmissions))
-      logger.info(`Done DataSubmission`)
-
-      logger.info(`Storing all accountToUpdate - ${accountToUpdate.length}`)
-      await updateAccounts(accountToUpdate, block.timestamp)
-      logger.info(`Done accountToUpdate`)
-
-      // // Save in db in parallel
-      // await Promise.all([
-      //   store.bulkCreate('Event', await Promise.all(events)),
-      //   store.bulkCreate('Extrinsic', await Promise.all(calls)),
-      //   store.bulkCreate('DataSubmission', await Promise.all(daSubmissions)),
-      //   updateAccounts(accountToUpdate, block.timestamp)
-      // ]);
+      // Save in db in parallel
+      await Promise.all([
+        store.bulkCreate('Event', await Promise.all(events)),
+        store.bulkCreate('Extrinsic', await Promise.all(calls)),
+        store.bulkCreate('DataSubmission', await Promise.all(daSubmissions)),
+        updateAccounts(accountToUpdate, block.timestamp)
+      ]);
     }
   } catch (err: any) {
     logger.error(`record block error at block nb ${block.block.header.number.toNumber()}`);
