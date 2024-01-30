@@ -102,15 +102,15 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       await store.bulkCreate('Event', await Promise.all(events))
       logger.info(`Done events`)
 
-      logger.info(`Storing all calls - ${events.length}`)
+      logger.info(`Storing all calls - ${calls.length}`)
       await store.bulkCreate('Extrinsic', await Promise.all(calls))
       logger.info(`Done calls`)
 
-      logger.info(`Storing all events - ${DataSubmission.length}`)
+      logger.info(`Storing all events - ${daSubmissions.length}`)
       await store.bulkCreate('DataSubmission', await Promise.all(daSubmissions))
       logger.info(`Done DataSubmission`)
 
-      logger.info(`Storing all accountToUpdate - ${events.length}`)
+      logger.info(`Storing all accountToUpdate - ${accountToUpdate.length}`)
       await updateAccounts(accountToUpdate, block.timestamp)
       logger.info(`Done accountToUpdate`)
 
