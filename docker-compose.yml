@@ -36,7 +36,7 @@ services:
       - --timeout=600000
       - --subscription
       - --workers=4
-      - --batch-size=2
+      - --batch-size=8
       # - --profiler
       # - --unsafe
     healthcheck:
