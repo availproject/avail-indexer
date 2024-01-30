@@ -31,10 +31,10 @@ network:
     ["<ws-endpoint>"]
   chaintypes:
     file: ./types.json
-  bypassBlocks: ["272000-280600"] #Some blocks to bypass because of event errors
+  bypassBlocks: ["272000-280500"] #Some blocks to bypass because of event errors
 dataSources:
   - kind: substrate/Runtime
-    startBlock: 0
+    startBlock: 1
     mapping:
       file: ./dist/index.js
       handlers:
