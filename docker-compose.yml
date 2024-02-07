@@ -62,5 +62,5 @@ services:
       - --indexer=http://subquery-node:3000
       - --subscription
       - --unsafe
-      - --query-timeout=30000
+      - --query-timeout=300000
       - --query-limit=500
