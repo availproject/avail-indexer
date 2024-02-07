@@ -35,7 +35,7 @@ type Extrinsic @entity {
   extrinsicIndex: Int!
   hash: String! @index(unique: true)
   timestamp: Date! @index
-  description: ExtrinsicDescription!
+  description: ExtrinsicDescription
   signer: String! @index
   signature: String!
   fees: String
@@ -62,7 +62,7 @@ type Event @entity {
   blockHeight: BigInt! @index
   eventIndex: Int!
   call: String! @index
-  description: EventDescription!
+  description: EventDescription
   argsName: [String]!
   argsValue: [String]!
   timestamp: Date! @index

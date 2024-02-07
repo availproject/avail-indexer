@@ -1,9 +1,9 @@
 import { EventRecord, Digest, Header, AccountId } from "@polkadot/types/interfaces"
 import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
-import { Event, Extrinsic, EventDescription, ExtrinsicDescription, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity, DataSubmission } from "../types";
+import { Event, Extrinsic, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity, DataSubmission } from "../types";
 import { getFees, shouldGetFees } from "../utils/extrinsic";
 import { roundPrice } from "../utils";
-import { transferHandler, updateAccounts } from "../utils/balances";
+import { transferHandler } from "../utils/balances";
 import { extractAuthor } from "../utils/author";
 import { formatInspect } from "../utils/inspect";
 
@@ -92,12 +92,12 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
         if (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex)) {
           events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
-          // Handle account updates
-          if ([...balanceEvents, ...feeEvents].includes(key)) {
-            const [who] = evt.event.data
-            const account = who.toString()
-            if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
-          }
+          // // Handle account updates
+          // if ([...balanceEvents, ...feeEvents].includes(key)) {
+          //   const [who] = evt.event.data
+          //   const account = who.toString()
+          //   if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
+          // }
         }
       });
 
@@ -107,7 +107,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         store.bulkCreate('Event', await Promise.all(events)),
         store.bulkCreate('Extrinsic', await Promise.all(calls)),
         store.bulkCreate('DataSubmission', await Promise.all(daSubmissions)),
-        updateAccounts(accountToUpdate, block.timestamp)
+        // updateAccounts(accountToUpdate, block.timestamp)
       ]);
       logger.info(`Finished in db`)
     }
@@ -134,7 +134,7 @@ export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersi
     )
     await Promise.all([
       handleLogs(blockHeader.number.toString(), blockHeader.digest),
-      updateSession(blockRecord, blockHeader.digest),
+      updateSession(blockRecord, blockHeader.digest, block.timestamp),
       updateSpecversion(specVersion, block.specVersion, blockHeader.number.toBigInt()),
       handleExtension(blockHeader)
     ])
@@ -154,18 +154,18 @@ export async function handleCall(
     const block = extrinsic.block
     const ext = extrinsic.extrinsic
     const methodData = ext.method
-    const documentation = ext.meta.docs ? ext.meta.docs : JSON.parse(JSON.stringify(ext.meta)).documentation
 
-    let descriptionRecord = await ExtrinsicDescription.get(`${methodData.section}_${methodData.method}`)
-    if (!descriptionRecord) {
-      descriptionRecord = new ExtrinsicDescription(
-        `${methodData.section}_${methodData.method}`,
-        methodData.section,
-        methodData.method,
-        JSON.stringify(documentation.map((d: any) => d.toString()).join('\n'))
-      )
-      await descriptionRecord.save()
-    }
+    // const documentation = ext.meta.docs ? ext.meta.docs : JSON.parse(JSON.stringify(ext.meta)).documentation
+    // let descriptionRecord = await ExtrinsicDescription.get(`${methodData.section}_${methodData.method}`)
+    // if (!descriptionRecord) {
+    //   descriptionRecord = new ExtrinsicDescription(
+    //     `${methodData.section}_${methodData.method}`,
+    //     methodData.section,
+    //     methodData.method,
+    //     JSON.stringify(documentation.map((d: any) => d.toString()).join('\n'))
+    //   )
+    //   await descriptionRecord.save()
+    // }
 
     const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
       methodData.args.map((a, i) => i === 0 ? a.toString().slice(0, 64) : a.toString())
@@ -184,7 +184,7 @@ export async function handleCall(
       extrinsic.idx,
       ext.hash.toString(),
       block.timestamp,
-      descriptionRecord.id,
+      // descriptionRecord.id,
       ext.signer.toString(),
       ext.signature.toString(),
       ext.nonce.toNumber(),
@@ -206,17 +206,17 @@ export async function handleCall(
 export async function handleEvent(blockNumber: string, eventIdx: number, event: EventRecord, extrinsicId: number, blockHash: string, timestamp: Date): Promise<Event> {
   try {
     const eventData = event.event
-    const documentation = eventData.meta.docs ? eventData.meta.docs : JSON.parse(JSON.stringify(eventData.meta)).documentation
-    let descriptionRecord = await EventDescription.get(`${eventData.section}_${eventData.method}`)
-    if (!descriptionRecord) {
-      descriptionRecord = new EventDescription(
-        `${eventData.section}_${eventData.method}`,
-        eventData.section,
-        eventData.method,
-        JSON.stringify(documentation.map((d: any) => d.toString()).join('\n'))
-      )
-      await descriptionRecord.save()
-    }
+    // const documentation = eventData.meta.docs ? eventData.meta.docs : JSON.parse(JSON.stringify(eventData.meta)).documentation
+    // let descriptionRecord = await EventDescription.get(`${eventData.section}_${eventData.method}`)
+    // if (!descriptionRecord) {
+    //   descriptionRecord = new EventDescription(
+    //     `${eventData.section}_${eventData.method}`,
+    //     eventData.section,
+    //     eventData.method,
+    //     JSON.stringify(documentation.map((d: any) => d.toString()).join('\n'))
+    //   )
+    //   await descriptionRecord.save()
+    // }
 
     const argsValue = `${eventData.section}_${eventData.method}` === "dataAvailability_DataSubmitted" ?
       eventData.data.map((a, i) => i === 1 ? a.toString().slice(0, 64) : a.toString())
@@ -231,7 +231,7 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
       BigInt(blockNumber),
       eventIdx,
       eventData.method,
-      descriptionRecord.id,
+      // descriptionRecord.id,
       eventData.meta.args.map(a => a.toString()),
       argsValue,
       timestamp
@@ -313,7 +313,7 @@ export const handleLog = async (blockNumber: string, index: number, type: string
   await logRecord.save()
 }
 
-export const updateSession = async (blockRecord: Block, digest: Digest) => {
+export const updateSession = async (blockRecord: Block, digest: Digest, timestamp: Date) => {
   try {
     const sessionId = await api.query.session.currentIndex()
     let sessionRecord = await Session.get(sessionId.toString())
@@ -321,7 +321,7 @@ export const updateSession = async (blockRecord: Block, digest: Digest) => {
       const validators = (await api.query.session.validators()) as unknown as string[]
       sessionRecord = new Session(sessionId.toString(), validators.map(x => x.toString()))
       await sessionRecord.save()
-      await setAccountsAsValidators(validators)
+      await setAccountsAsValidators(validators, timestamp)
     }
     blockRecord.sessionId = Number(sessionRecord.id)
     const author = extractAuthor(digest, sessionRecord.validators as unknown as AccountId[])
@@ -393,15 +393,15 @@ export const handleExtension = async (blockHeader: Header) => {
   }
 }
 
-export const setAccountsAsValidators = async (accounts: string[]) => {
-  const updatedAcc = []
+export const setAccountsAsValidators = async (accounts: string[], timestamp: Date) => {
   for (const acc of accounts) {
     let dbAccount = await AccountEntity.get(acc)
-    if (dbAccount) {
-      dbAccount.validator = true
-      dbAccount.validatorSessionParticipated = (dbAccount.validatorSessionParticipated || 0) + 1
-      updatedAcc.push(dbAccount)
-      await dbAccount.save()
+    if (!dbAccount) {
+      dbAccount = new AccountEntity(acc, new Date(), new Date(), timestamp)
+      dbAccount.validatorSessionParticipated = 0
     }
+    dbAccount.validator = true
+    dbAccount.validatorSessionParticipated = (dbAccount.validatorSessionParticipated || 0) + 1
+    await dbAccount.save()
   }
 }
