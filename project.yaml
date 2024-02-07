@@ -26,15 +26,15 @@ network:
   #   ["ws://host.docker.internal:9944"]                                          # Local with Docker
   
   # The genesis hash of the network (hash of block 0)
-  chainId: "0x6f09966420b2608d1947ccfb0f2a362450d1fc7fd902c29b67c906eaa965a7ae"
+  chainId: "<blockhash>"
   endpoint:
-    ["wss://rpc-testnet.avail.tools/ws"]
+    ["<ws-endpoint>"]
   chaintypes:
     file: ./types.json
   bypassBlocks: ["272000-280500"] #Some blocks to bypass because of event errors
 dataSources:
   - kind: substrate/Runtime
-    startBlock: 371475
+    startBlock: 1
     mapping:
       file: ./dist/index.js
       handlers:
