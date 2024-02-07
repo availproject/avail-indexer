@@ -83,6 +83,6 @@ export const transferHandler = async (event: EventRecord, blockId: string, block
             roundPrice(formattedAmount)
         )
         await record.save()
-        // await updateAccounts([to.toString()], timestamp)
+        await updateAccounts([to.toString()], timestamp)
     }
 }

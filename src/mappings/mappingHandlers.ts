@@ -3,7 +3,7 @@ import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
 import { Event, Extrinsic, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity, DataSubmission } from "../types";
 import { getFees, shouldGetFees } from "../utils/extrinsic";
 import { roundPrice } from "../utils";
-import { transferHandler } from "../utils/balances";
+import { transferHandler, updateAccounts } from "../utils/balances";
 import { extractAuthor } from "../utils/author";
 import { formatInspect } from "../utils/inspect";
 
@@ -92,12 +92,12 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
         if (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex)) {
           events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
-          // // Handle account updates
-          // if ([...balanceEvents, ...feeEvents].includes(key)) {
-          //   const [who] = evt.event.data
-          //   const account = who.toString()
-          //   if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
-          // }
+          // Handle account updates
+          if ([...balanceEvents, ...feeEvents].includes(key)) {
+            const [who] = evt.event.data
+            const account = who.toString()
+            if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
+          }
         }
       });
 
@@ -107,7 +107,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         store.bulkCreate('Event', await Promise.all(events)),
         store.bulkCreate('Extrinsic', await Promise.all(calls)),
         store.bulkCreate('DataSubmission', await Promise.all(daSubmissions)),
-        // updateAccounts(accountToUpdate, block.timestamp)
+        updateAccounts(accountToUpdate, block.timestamp)
       ]);
       logger.info(`Finished in db`)
     }
@@ -134,7 +134,7 @@ export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersi
     )
     await Promise.all([
       handleLogs(blockHeader.number.toString(), blockHeader.digest),
-      updateSession(blockRecord, blockHeader.digest, block.timestamp),
+      updateSession(blockRecord, blockHeader.digest),
       updateSpecversion(specVersion, block.specVersion, blockHeader.number.toBigInt()),
       handleExtension(blockHeader)
     ])
@@ -313,7 +313,7 @@ export const handleLog = async (blockNumber: string, index: number, type: string
   await logRecord.save()
 }
 
-export const updateSession = async (blockRecord: Block, digest: Digest, timestamp: Date) => {
+export const updateSession = async (blockRecord: Block, digest: Digest) => {
   try {
     const sessionId = await api.query.session.currentIndex()
     let sessionRecord = await Session.get(sessionId.toString())
@@ -321,7 +321,7 @@ export const updateSession = async (blockRecord: Block, digest: Digest, timestam
       const validators = (await api.query.session.validators()) as unknown as string[]
       sessionRecord = new Session(sessionId.toString(), validators.map(x => x.toString()))
       await sessionRecord.save()
-      await setAccountsAsValidators(validators, timestamp)
+      await setAccountsAsValidators(validators)
     }
     blockRecord.sessionId = Number(sessionRecord.id)
     const author = extractAuthor(digest, sessionRecord.validators as unknown as AccountId[])
@@ -393,15 +393,15 @@ export const handleExtension = async (blockHeader: Header) => {
   }
 }
 
-export const setAccountsAsValidators = async (accounts: string[], timestamp: Date) => {
+export const setAccountsAsValidators = async (accounts: string[]) => {
+  const updatedAcc = []
   for (const acc of accounts) {
     let dbAccount = await AccountEntity.get(acc)
-    if (!dbAccount) {
-      dbAccount = new AccountEntity(acc, new Date(), new Date(), timestamp)
-      dbAccount.validatorSessionParticipated = 0
+    if (dbAccount) {
+      dbAccount.validator = true
+      dbAccount.validatorSessionParticipated = (dbAccount.validatorSessionParticipated || 0) + 1
+      updatedAcc.push(dbAccount)
+      await dbAccount.save()
     }
-    dbAccount.validator = true
-    dbAccount.validatorSessionParticipated = (dbAccount.validatorSessionParticipated || 0) + 1
-    await dbAccount.save()
   }
 }
