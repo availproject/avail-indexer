@@ -165,7 +165,6 @@ export async function handleCall(
         JSON.stringify(documentation.map((d: any) => d.toString()).join('\n'))
       )
       await descriptionRecord.save()
-      logger.info('new extrinsic description recorded')
     }
 
     const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
@@ -217,7 +216,6 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
         JSON.stringify(documentation.map((d: any) => d.toString()).join('\n'))
       )
       await descriptionRecord.save()
-      logger.info('new event description recorded')
     }
 
     const argsValue = `${eventData.section}_${eventData.method}` === "dataAvailability_DataSubmitted" ?
