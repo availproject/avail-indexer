@@ -35,7 +35,7 @@ services:
       - --unfinalized-blocks=false
       - --timeout=600000
       - --subscription
-      - --workers=1
+      - --workers=2
       - --batch-size=2
       # - --profiler
       # - --unsafe

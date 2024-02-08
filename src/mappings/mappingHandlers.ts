@@ -1,7 +1,6 @@
 import { EventRecord, Digest, Header, AccountId } from "@polkadot/types/interfaces"
 import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
-import { Event, Extrinsic, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity, DataSubmission } from "../types";
-import { getFees, shouldGetFees } from "../utils/extrinsic";
+import { Event, Extrinsic, SpecVersion, Block, Session, Log, HeaderExtension, Commitment, AppLookup, AccountEntity, DataSubmission, TransferEntity } from "../types";
 import { roundPrice } from "../utils";
 import { transferHandler, updateAccounts } from "../utils/balances";
 import { extractAuthor } from "../utils/author";
@@ -36,16 +35,17 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
     const dbBlock = await Block.get(blockNumber.toString())
     if (!dbBlock) {
       // Generic block
-      logger.info(`Block handler`)
+      logger.info(`Block handler: N°${blockNumber.toString()}`)
       await blockHandler(block, specVersion)
 
-      const events: Promise<Event>[] = []
-      const calls: Promise<Extrinsic>[] = []
-      const daSubmissions: Promise<DataSubmission>[] = []
+      const events: Event[] = []
+      const calls: Extrinsic[] = []
+      const daSubmissions: DataSubmission[] = []
       const validExtId: number[] = []
       const validEvents: [EventRecord, number][] = []
       const extIdToDetails: { [key: number]: { nbEvents: number, success?: boolean } } = {}
       const accountToUpdate: string[] = []
+      const transfers: TransferEntity[] = []
 
       // Events count / setup / First filtering
       logger.info(`Block events 1 - ${block.events.length}`)
@@ -91,7 +91,21 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         const key = `${evt.event.section}.${evt.event.method}`
         const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
         if (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex)) {
+          // Handle events
           events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
+
+          // Handle transfers
+          if (transferEvents.includes(key)) {
+            transfers.push(transferHandler(
+              evt,
+              blockNumber.toString(),
+              block.block.header.hash.toString(),
+              block.timestamp,
+              relatedExtrinsicIndex !== -1 ? `${blockNumber}-${relatedExtrinsicIndex}` : "",
+              idx
+            ))
+          }
+
           // Handle account updates
           if ([...balanceEvents, ...feeEvents].includes(key)) {
             const [who] = evt.event.data
@@ -101,13 +115,20 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         }
       });
 
+      // Handle accounts
+      logger.info(`Block Accounts to update/create - ${accountToUpdate.length}`)
+      const accounts = await updateAccounts(accountToUpdate, block.timestamp)
+
+
       // Save in db in parallel
       logger.info(`Save in db`)
       await Promise.all([
-        store.bulkCreate('Event', await Promise.all(events)),
-        store.bulkCreate('Extrinsic', await Promise.all(calls)),
-        store.bulkCreate('DataSubmission', await Promise.all(daSubmissions)),
-        updateAccounts(accountToUpdate, block.timestamp)
+        store.bulkCreate('Event', events),
+        store.bulkCreate('Extrinsic', calls),
+        store.bulkCreate('DataSubmission', daSubmissions),
+        store.bulkCreate('AccountEntity', accounts.accountsToCreate),
+        store.bulkUpdate('AccountEntity', accounts.accountsToUpdate),
+        store.bulkCreate('TransferEntity', transfers),
       ]);
       logger.info(`Finished in db`)
     }
@@ -145,11 +166,11 @@ export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersi
   }
 }
 
-export async function handleCall(
+export function handleCall(
   idx: string,
   extrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'>,
   extraDetails: { nbEvents: number, success?: boolean | undefined } | undefined
-): Promise<Extrinsic> {
+): Extrinsic {
   try {
     const block = extrinsic.block
     const ext = extrinsic.extrinsic
@@ -192,7 +213,7 @@ export async function handleCall(
       argsValue,
       extraDetails?.nbEvents || 0
     );
-    extrinsicRecord.fees = shouldGetFees(extrinsicRecord.module) ? await getFees(ext.toHex(), block.block.header.hash.toHex()) : ""
+    extrinsicRecord.fees = "0" //shouldGetFees(extrinsicRecord.module) ? await getFees(ext.toHex(), block.block.header.hash.toHex()) : ""
     extrinsicRecord.feesRounded = extrinsicRecord.fees ? roundPrice(extrinsicRecord.fees) : undefined
     return extrinsicRecord
   } catch (err: any) {
@@ -203,7 +224,7 @@ export async function handleCall(
   }
 }
 
-export async function handleEvent(blockNumber: string, eventIdx: number, event: EventRecord, extrinsicId: number, blockHash: string, timestamp: Date): Promise<Event> {
+export function handleEvent(blockNumber: string, eventIdx: number, event: EventRecord, extrinsicId: number, blockHash: string, timestamp: Date): Event {
   try {
     const eventData = event.event
     // const documentation = eventData.meta.docs ? eventData.meta.docs : JSON.parse(JSON.stringify(eventData.meta)).documentation
@@ -237,9 +258,6 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
       timestamp
     );
     if (extrinsicId !== -1) newEvent.extrinsicId = `${blockNumber}-${extrinsicId}`
-
-    await transferHandler(event, blockNumber, blockHash, timestamp, newEvent.extrinsicId || "", eventIdx)
-
     return newEvent;
   } catch (err) {
     logger.error('record event error at block number:' + blockNumber.toString());
@@ -248,12 +266,12 @@ export async function handleEvent(blockNumber: string, eventIdx: number, event: 
   }
 }
 
-export async function handleDataSubmission(idx: string, extrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'>): Promise<DataSubmission> {
+export function handleDataSubmission(idx: string, extrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'>): DataSubmission {
   const block = extrinsic.block
   const ext = extrinsic.extrinsic
   const methodData = ext.method
 
-  const fees = shouldGetFees(methodData.section) ? await getFees(ext.toHex(), block.block.header.hash.toHex()) : ""
+  const fees = "0" //shouldGetFees(methodData.section) ? await getFees(ext.toHex(), block.block.header.hash.toHex()) : ""
   const feesRounded = fees ? roundPrice(fees) : undefined
 
   let dataSubmissionSize = methodData.args.length > 0 ? methodData.args[0].toString().length / 2 : 0
