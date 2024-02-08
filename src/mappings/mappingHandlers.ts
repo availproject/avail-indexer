@@ -116,8 +116,8 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       });
 
       // Handle accounts
-      logger.info(`Block Accounts to update/create - ${accountToUpdate.length}`)
-      const accounts = await updateAccounts(accountToUpdate, block.timestamp)
+      // logger.info(`Block Accounts to update/create - ${accountToUpdate.length}`)
+      // const accounts = await updateAccounts(accountToUpdate, block.timestamp)
 
 
       // Save in db in parallel
@@ -126,8 +126,8 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         store.bulkCreate('Event', events),
         store.bulkCreate('Extrinsic', calls),
         store.bulkCreate('DataSubmission', daSubmissions),
-        store.bulkCreate('AccountEntity', accounts.accountsToCreate),
-        store.bulkUpdate('AccountEntity', accounts.accountsToUpdate),
+        // store.bulkCreate('AccountEntity', accounts.accountsToCreate),
+        // store.bulkUpdate('AccountEntity', accounts.accountsToUpdate),
         store.bulkCreate('TransferEntity', transfers),
       ]);
       logger.info(`Finished in db`)
