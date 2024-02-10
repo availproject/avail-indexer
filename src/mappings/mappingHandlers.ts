@@ -48,21 +48,21 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       const transfers: TransferEntity[] = []
 
       // Events count / setup / First filtering
-      // logger.info(`Block events 1 - ${block.events.length}`)
-      // block.events.map((evt, idx) => {
-      //   let eventType = `${evt.event.section}_${evt.event.method}`
-      //   const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
-      //   if (extIdToDetails[relatedExtrinsicIndex] === undefined) {
-      //     extIdToDetails[relatedExtrinsicIndex] = {
-      //       nbEvents: 0
-      //     }
-      //   }
-      //   extIdToDetails[relatedExtrinsicIndex].nbEvents += 1
-      //   if (evt.event.method === 'ExtrinsicSuccess') extIdToDetails[relatedExtrinsicIndex].success = true
-      //   if (!excludeEvents.includes(eventType)) {
-      //     validEvents.push([evt, idx])
-      //   }
-      // })
+      logger.info(`Block events 1 - ${block.events.length}`)
+      block.events.map((evt, idx) => {
+        let eventType = `${evt.event.section}_${evt.event.method}`
+        const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
+        if (extIdToDetails[relatedExtrinsicIndex] === undefined) {
+          extIdToDetails[relatedExtrinsicIndex] = {
+            nbEvents: 0
+          }
+        }
+        extIdToDetails[relatedExtrinsicIndex].nbEvents += 1
+        if (evt.event.method === 'ExtrinsicSuccess') extIdToDetails[relatedExtrinsicIndex].success = true
+        if (!excludeEvents.includes(eventType)) {
+          validEvents.push([evt, idx])
+        }
+      })
 
       // Extrinsics
       logger.info(`Block Extrinsics - ${block.block.extrinsics.length}`)
@@ -80,40 +80,40 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
             block,
           }
 
-          // calls.push(handleCall(`${blockNumber.toString()}-${idx}`, substrateExtrinsic, extIdToDetails[idx]))
+          calls.push(handleCall(`${blockNumber.toString()}-${idx}`, substrateExtrinsic, extIdToDetails[idx]))
           if (isDataSubmission) daSubmissions.push(handleDataSubmission(`${blockNumber.toString()}-${idx}`, substrateExtrinsic))
         }
       })
 
       // Events mapping and second filtering
-      // logger.info(`Block events 2 - ${validEvents.length}`)
-      // validEvents.map(([evt, idx]) => {
-      //   const key = `${evt.event.section}.${evt.event.method}`
-      //   const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
-      //   if (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex)) {
-      //     // Handle events
-      //     events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
+      logger.info(`Block events 2 - ${validEvents.length}`)
+      validEvents.map(([evt, idx]) => {
+        const key = `${evt.event.section}.${evt.event.method}`
+        const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
+        if (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex)) {
+          // Handle events
+          events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
 
-      //     // Handle transfers
-      //     if (transferEvents.includes(key)) {
-      //       transfers.push(transferHandler(
-      //         evt,
-      //         blockNumber.toString(),
-      //         block.block.header.hash.toString(),
-      //         block.timestamp,
-      //         relatedExtrinsicIndex !== -1 ? `${blockNumber}-${relatedExtrinsicIndex}` : "",
-      //         idx
-      //       ))
-      //     }
+          // Handle transfers
+          if (transferEvents.includes(key)) {
+            transfers.push(transferHandler(
+              evt,
+              blockNumber.toString(),
+              block.block.header.hash.toString(),
+              block.timestamp,
+              relatedExtrinsicIndex !== -1 ? `${blockNumber}-${relatedExtrinsicIndex}` : "",
+              idx
+            ))
+          }
 
-      //     // Handle account updates
-      //     if ([...balanceEvents, ...feeEvents].includes(key)) {
-      //       const [who] = evt.event.data
-      //       const account = who.toString()
-      //       if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
-      //     }
-      //   }
-      // });
+          // Handle account updates
+          if ([...balanceEvents, ...feeEvents].includes(key)) {
+            const [who] = evt.event.data
+            const account = who.toString()
+            if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
+          }
+        }
+      });
 
       // Handle accounts
       // logger.info(`Block Accounts to update/create - ${accountToUpdate.length}`)
