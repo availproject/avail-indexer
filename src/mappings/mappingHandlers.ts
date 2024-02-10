@@ -8,13 +8,6 @@ import { formatInspect } from "../utils/inspect";
 
 let specVersion: SpecVersion;
 
-// Those extrinsics will be excluded from indexer
-export const excludeExtrinsics: string[] = ["system_remark", "system_remarkWithEvent"]
-// Those events will be excluded from indexer
-export const excludeEvents: string[] = ["system_Remarked", "utility_ItemCompleted"]
-// The events in those extrinsics will be excluded
-export const excludeEventsInExtrinsics: string[] = []
-
 export const balanceEvents = [
   "balances.BalanceSet",
   "balances.Deposit",
@@ -41,16 +34,14 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
       const events: Event[] = []
       const calls: Extrinsic[] = []
       const daSubmissions: DataSubmission[] = []
-      const validExtId: number[] = []
-      const validEvents: [EventRecord, number][] = []
       const extIdToDetails: { [key: number]: { nbEvents: number, success?: boolean } } = {}
       const accountToUpdate: string[] = []
       const transfers: TransferEntity[] = []
 
       // Events count / setup / First filtering
-      logger.info(`Block events 1 - ${block.events.length}`)
+      logger.info(`Block events - ${block.events.length}`)
       block.events.map((evt, idx) => {
-        let eventType = `${evt.event.section}_${evt.event.method}`
+        const key = `${evt.event.section}.${evt.event.method}`
         const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
         if (extIdToDetails[relatedExtrinsicIndex] === undefined) {
           extIdToDetails[relatedExtrinsicIndex] = {
@@ -59,66 +50,48 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         }
         extIdToDetails[relatedExtrinsicIndex].nbEvents += 1
         if (evt.event.method === 'ExtrinsicSuccess') extIdToDetails[relatedExtrinsicIndex].success = true
-        if (!excludeEvents.includes(eventType)) {
-          validEvents.push([evt, idx])
+        events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
+        // Handle transfers
+        if (transferEvents.includes(key)) {
+          transfers.push(transferHandler(
+            evt,
+            blockNumber.toString(),
+            block.block.header.hash.toString(),
+            block.timestamp,
+            relatedExtrinsicIndex !== -1 ? `${blockNumber}-${relatedExtrinsicIndex}` : "",
+            idx
+          ))
+        }
+
+        // Handle account updates
+        if ([...balanceEvents, ...feeEvents].includes(key)) {
+          const [who] = evt.event.data
+          const account = who.toString()
+          if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
         }
       })
+
 
       // Extrinsics
       logger.info(`Block Extrinsics - ${block.block.extrinsics.length}`)
       block.block.extrinsics.map((extrinsic, idx) => {
         const methodData = extrinsic.method
         const extrinsicType = `${methodData.section}_${methodData.method}`
-        if (!excludeExtrinsics.includes(extrinsicType)) {
-          const isDataSubmission = extrinsicType === "dataAvailability_submitData"
-          if (!excludeEventsInExtrinsics.includes(extrinsicType)) validExtId.push(idx)
-
-          // We use this instead of "wrapExtrinsic" to avoid looping on events
-          const substrateExtrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'> = {
-            idx,
-            extrinsic,
-            block,
-          }
-
-          calls.push(handleCall(`${blockNumber.toString()}-${idx}`, substrateExtrinsic, extIdToDetails[idx]))
-          if (isDataSubmission) daSubmissions.push(handleDataSubmission(`${blockNumber.toString()}-${idx}`, substrateExtrinsic))
+        const isDataSubmission = extrinsicType === "dataAvailability_submitData"
+        // We use this instead of "wrapExtrinsic" to avoid looping on events
+        const substrateExtrinsic: Omit<SubstrateExtrinsic, 'events' | 'success'> = {
+          idx,
+          extrinsic,
+          block,
         }
+
+        calls.push(handleCall(`${blockNumber.toString()}-${idx}`, substrateExtrinsic, extIdToDetails[idx]))
+        if (isDataSubmission) daSubmissions.push(handleDataSubmission(`${blockNumber.toString()}-${idx}`, substrateExtrinsic))
       })
-
-      // Events mapping and second filtering
-      logger.info(`Block events 2 - ${validEvents.length}`)
-      validEvents.map(([evt, idx]) => {
-        const key = `${evt.event.section}.${evt.event.method}`
-        const relatedExtrinsicIndex = evt.phase.isApplyExtrinsic ? evt.phase.asApplyExtrinsic.toNumber() : -1
-        if (relatedExtrinsicIndex === -1 || validExtId.includes(relatedExtrinsicIndex)) {
-          // Handle events
-          events.push(handleEvent(blockNumber.toString(), idx, evt, relatedExtrinsicIndex, block.block.header.hash.toString(), block.timestamp))
-
-          // Handle transfers
-          if (transferEvents.includes(key)) {
-            transfers.push(transferHandler(
-              evt,
-              blockNumber.toString(),
-              block.block.header.hash.toString(),
-              block.timestamp,
-              relatedExtrinsicIndex !== -1 ? `${blockNumber}-${relatedExtrinsicIndex}` : "",
-              idx
-            ))
-          }
-
-          // Handle account updates
-          if ([...balanceEvents, ...feeEvents].includes(key)) {
-            const [who] = evt.event.data
-            const account = who.toString()
-            if (!accountToUpdate.includes(account)) accountToUpdate.push(account)
-          }
-        }
-      });
 
       // Handle accounts
       // logger.info(`Block Accounts to update/create - ${accountToUpdate.length}`)
       // const accounts = await updateAccounts(accountToUpdate, block.timestamp)
-
 
       // Save in db in parallel
       logger.info(`Save in db`)
