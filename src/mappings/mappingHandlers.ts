@@ -136,6 +136,8 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         store.bulkCreate('TransferEntity', transfers),
       ]);
       logger.info(`Finished in db`)
+    } else {
+      logger.info('Block already exist, skipping :)')
     }
   } catch (err: any) {
     logger.error(`record block error at block nb ${block.block.header.number.toNumber()}`);
