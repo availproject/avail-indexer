@@ -41,8 +41,8 @@ export const roundPrice = (amount : string) => {
 	try{
 		if (!amount || amount.length === 0 || !isNumeric(amount)) throw new Error()
 		const divider = 1000000000000000000
-		const parsedPrice = (parseInt(amount)/divider).toFixed(3)
-	    const roundedPrice = (parseFloat(parsedPrice)*100)/100;
+		const parsedPrice = (parseInt(amount)/divider).toFixed(4)
+	    const roundedPrice = (parseFloat(parsedPrice)*1000)/1000;
 		return roundedPrice
 	}catch{
 		return 0

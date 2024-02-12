@@ -5,16 +5,16 @@ type SpecVersion @entity {
 
 type Block @entity {
   id: ID!
-  number: Int! @index
-  hash: String! @index(unique: true)
-  timestamp: Date! @index(unique: true)
+  number: Int!
+  hash: String!
+  timestamp: Date!
   parentHash: String!
   stateRoot: String!
   extrinsicsRoot: String!
   runtimeVersion: Int!
   nbExtrinsics: Int!
-  author: String @index
-  sessionId: Int @index
+  author: String
+  sessionId: Int
   finalized: Boolean!
 }
 
@@ -26,17 +26,17 @@ type Session @entity {
 type Extrinsic @entity {
   id: ID!
   block: Block!
-  txHash: String! @index(unique: true)
-  module: String! @index
-  call: String! @index
-  blockHeight: BigInt! @index
+  txHash: String!
+  module: String!
+  call: String!
+  blockHeight: BigInt!
   success: Boolean!
   isSigned: Boolean!
   extrinsicIndex: Int!
-  hash: String! @index(unique: true)
-  timestamp: Date! @index
+  hash: String!
+  timestamp: Date!
   description: ExtrinsicDescription
-  signer: String! @index
+  signer: String!
   signature: String!
   fees: String
   feesRounded: Float
@@ -57,15 +57,15 @@ type Event @entity {
   id: ID!
   block: Block!
   extrinsicId: String
-  module: String! @index
-  event: String! @index
-  blockHeight: BigInt! @index
+  module: String!
+  event: String!
+  blockHeight: BigInt!
   eventIndex: Int!
-  call: String! @index
+  call: String!
   description: EventDescription
   argsName: [String]!
   argsValue: [String]!
-  timestamp: Date! @index
+  timestamp: Date!
 }
 
 type EventDescription @entity {
@@ -109,15 +109,15 @@ type AppLookup @entity {
 
 type TransferEntity @entity {
   id: ID!
-  blockId: String! @index
+  blockId: String!
   blockHash: String!
   extrinsicId: String!
-  timestamp: Date! @index
-  from: String! @index
-  to: String! @index
+  timestamp: Date!
+  from: String!
+  to: String!
   currency: String!
   amount: String!
-  amountRounded: Float! @index
+  amountRounded: Float!
 }
 
 type AccountEntity @entity {
@@ -138,10 +138,10 @@ type AccountEntity @entity {
 type DataSubmission @entity {
   id: ID!
   extrinsicId: String!
-  timestamp: Date! @index
-  byteSize: Int! @index
-  appId: Int! @index
-  signer: String! @index
+  timestamp: Date!
+  byteSize: Int!
+  appId: Int!
+  signer: String!
   fees: Float
-  feesPerMb: Float @index
+  feesPerMb: Float
 }
