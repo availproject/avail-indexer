@@ -1,7 +1,6 @@
 import { EventRecord } from "@polkadot/types/interfaces"
 import { Balance } from "@polkadot/types/interfaces"
 import { roundPrice } from ".";
-import { transferEvents } from "../mappings/mappingHandlers";
 import { AccountEntity, TransferEntity } from "../types";
 
 type AccountData = {
@@ -62,7 +61,7 @@ export const updateAccounts = async (addresses: string[], timestamp: Date) => {
                     accountsToUpdate.push(record)
                 }
             } else {
-                logger.warning("Error in update accout : Balance not found")
+                logger.warning("Error in update account : Balance not found")
             }
         })
         return {
@@ -70,8 +69,8 @@ export const updateAccounts = async (addresses: string[], timestamp: Date) => {
             accountsToUpdate
         }
     } catch (err: any) {
-        logger.error("Error in update accout : " + err.toString())
-        if (err.sql) logger.error("Error in update accout : " + JSON.stringify(err.sql))
+        logger.error("Error in update account : " + err.toString())
+        if (err.sql) logger.error("Error in update account : " + JSON.stringify(err.sql))
         return {
             accountsToCreate: [],
             accountsToUpdate: []

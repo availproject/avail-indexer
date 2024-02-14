@@ -34,9 +34,9 @@ services:
       - --db-schema=avail-indexer
       - --unfinalized-blocks=false
       - --timeout=600000
-      - --subscription
-      - --workers=6
-      - --batch-size=20
+      - --workers=2
+      - --batch-size=2
+      - --disable-historical=true
       # - --profiler
       # - --unsafe
     healthcheck:

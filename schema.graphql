@@ -5,16 +5,16 @@ type SpecVersion @entity {
 
 type Block @entity {
   id: ID!
-  number: Int! @index
-  hash: String! @index(unique: true)
-  timestamp: Date! @index(unique: true)
+  number: Int!
+  hash: String!
+  timestamp: Date!
   parentHash: String!
   stateRoot: String!
   extrinsicsRoot: String!
   runtimeVersion: Int!
   nbExtrinsics: Int!
-  author: String @index
-  sessionId: Int @index
+  author: String
+  sessionId: Int
   finalized: Boolean!
 }
 
