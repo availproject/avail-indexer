@@ -18,63 +18,6 @@ type Block @entity {
   finalized: Boolean!
 }
 
-type Session @entity {
-  id: ID!
-  validators: [String]!
-}
-
-type Extrinsic @entity {
-  id: ID!
-  block: Block!
-  txHash: String! @index(unique: true)
-  module: String! @index
-  call: String! @index
-  blockHeight: BigInt! @index
-  success: Boolean!
-  isSigned: Boolean!
-  extrinsicIndex: Int!
-  hash: String! @index(unique: true)
-  timestamp: Date! @index
-  description: ExtrinsicDescription
-  signer: String! @index
-  signature: String!
-  fees: String
-  feesRounded: Float
-  nonce: Int!
-  argsName: [String]!
-  argsValue: [String]!
-  nbEvents: Int!
-}
-
-type ExtrinsicDescription @entity {
-  id: ID!
-  module: String!
-  call: String!
-  description: String!
-}
-
-type Event @entity {
-  id: ID!
-  block: Block!
-  extrinsicId: String
-  module: String! @index
-  event: String! @index
-  blockHeight: BigInt! @index
-  eventIndex: Int!
-  call: String! @index
-  description: EventDescription
-  argsName: [String]!
-  argsValue: [String]!
-  timestamp: Date! @index
-}
-
-type EventDescription @entity {
-  id: ID!
-  module: String!
-  call: String!
-  description: String!
-}
-
 type Log @entity {
   id: ID!
   block: Block!
@@ -105,43 +48,4 @@ type AppLookup @entity {
   headerExtension: HeaderExtension!
   size: Int
   index: String
-}
-
-type TransferEntity @entity {
-  id: ID!
-  blockId: String! @index
-  blockHash: String!
-  extrinsicId: String!
-  timestamp: Date! @index
-  from: String! @index
-  to: String! @index
-  currency: String!
-  amount: String!
-  amountRounded: Float! @index
-}
-
-type AccountEntity @entity {
-  id: ID!
-  validator: Boolean
-  validatorSessionParticipated: Int
-  amount: String
-  amountFrozen: String
-  amountTotal: String
-  amountRounded: Float @index
-  amountFrozenRounded: Float @index
-  amountTotalRounded: Float @index
-  createdAt: Date!
-  updatedAt: Date!
-  timestampCreation: Date! @index
-}
-
-type DataSubmission @entity {
-  id: ID!
-  extrinsicId: String!
-  timestamp: Date! @index
-  byteSize: Int! @index
-  appId: Int! @index
-  signer: String! @index
-  fees: Float
-  feesPerMb: Float @index
 }

@@ -10,7 +10,7 @@ runner:
     version: "*"
 description: >-
   Avail indexer project
-repository: "https://github.com/availproject/avail-indexer"
+repository: "https://github.com/succinctlabs/avail-indexer"
 schema:
   file: ./schema.graphql
 network:
@@ -24,11 +24,10 @@ network:
   #   ["wss://couscous-devnet.avail.tools/ws"]
   #   ["ws://127.0.0.1:9944"]                                                     # Local
   #   ["ws://host.docker.internal:9944"]                                          # Local with Docker
-  
+
   # The genesis hash of the network (hash of block 0)
   chainId: "<blockhash>"
-  endpoint:
-    ["<ws-endpoint>"]
+  endpoint: ["<ws-endpoint>"]
   chaintypes:
     file: ./types.json
   bypassBlocks: ["272000-280500"] #Some blocks to bypass because of event errors
