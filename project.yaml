@@ -16,12 +16,9 @@ schema:
 network:
   # The genesis hash of the network (hash of block 0)
   # chainId: "0x6f09966420b2608d1947ccfb0f2a362450d1fc7fd902c29b67c906eaa965a7ae" # Goldberg
-  # chainId: "0x870e903076fe2bec249cc31fdb1b5717d89d0a0b6ae38241a58d6edeac5e1859" # Couscous
   # chainId: "<local_chain_genesis_hash>"                                         # Local
   # chainId: "<local_chain_genesis_hash>"                                         # Local with Docker
   # endpoint:
-  #   ["wss://rpc-testnet.avail.tools/ws"]
-  #   ["wss://couscous-devnet.avail.tools/ws"]
   #   ["ws://127.0.0.1:9944"]                                                     # Local
   #   ["ws://host.docker.internal:9944"]                                          # Local with Docker
   
@@ -31,7 +28,6 @@ network:
     ["<ws-endpoint>"]
   chaintypes:
     file: ./types.json
-  bypassBlocks: ["272000-280500"] #Some blocks to bypass because of event errors
 dataSources:
   - kind: substrate/Runtime
     startBlock: 1
