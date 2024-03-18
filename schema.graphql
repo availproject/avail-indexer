@@ -5,17 +5,17 @@ type SpecVersion @entity {
 
 type Block @entity {
   id: ID!
-  number: Int!
-  hash: String!
-  timestamp: Date!
+  number: Int! @index
+  hash: String! @index(unique: true)
+  timestamp: Date! @index(unique: true)
   parentHash: String!
   stateRoot: String!
   extrinsicsRoot: String!
   runtimeVersion: Int!
   nbExtrinsics: Int!
-  author: String
-  sessionId: Int
-  finalized: Boolean!
+  nbEvents: Int!
+  author: String @index
+  sessionId: Int @index
 }
 
 type Session @entity {
@@ -26,53 +26,37 @@ type Session @entity {
 type Extrinsic @entity {
   id: ID!
   block: Block!
-  txHash: String!
-  module: String!
-  call: String!
-  blockHeight: BigInt!
+  txHash: String! @index(unique: true)
+  module: String! @index
+  call: String! @index
+  blockHeight: BigInt! @index
   success: Boolean!
   isSigned: Boolean!
   extrinsicIndex: Int!
-  hash: String!
-  timestamp: Date!
-  description: ExtrinsicDescription
-  signer: String!
+  hash: String! @index(unique: true)
+  timestamp: Date! @index
+  signer: String! @index
   signature: String!
   fees: String
-  feesRounded: Float
+  feesRounded: Float @index
   nonce: Int!
   argsName: [String]!
   argsValue: [String]!
   nbEvents: Int!
 }
 
-type ExtrinsicDescription @entity {
-  id: ID!
-  module: String!
-  call: String!
-  description: String!
-}
-
 type Event @entity {
   id: ID!
   block: Block!
   extrinsicId: String
-  module: String!
-  event: String!
-  blockHeight: BigInt!
+  module: String! @index
+  event: String! @index
+  blockHeight: BigInt! @index
   eventIndex: Int!
-  call: String!
-  description: EventDescription
+  call: String! @index
   argsName: [String]!
   argsValue: [String]!
-  timestamp: Date!
-}
-
-type EventDescription @entity {
-  id: ID!
-  module: String!
-  call: String!
-  description: String!
+  timestamp: Date! @index
 }
 
 type Log @entity {
@@ -95,7 +79,7 @@ type Commitment @entity {
   headerExtension: HeaderExtension!
   rows: Int
   cols: Int
-  dataRoot: String
+  dataRoot: String @index
   commitment: String
 }
 
@@ -109,15 +93,15 @@ type AppLookup @entity {
 
 type TransferEntity @entity {
   id: ID!
-  blockId: String!
+  blockId: String! @index
   blockHash: String!
   extrinsicId: String!
-  timestamp: Date!
-  from: String!
-  to: String!
+  timestamp: Date! @index
+  from: String! @index
+  to: String! @index
   currency: String!
   amount: String!
-  amountRounded: Float!
+  amountRounded: Float! @index
 }
 
 type AccountEntity @entity {
@@ -138,10 +122,15 @@ type AccountEntity @entity {
 type DataSubmission @entity {
   id: ID!
   extrinsicId: String!
-  timestamp: Date!
-  byteSize: Int!
-  appId: Int!
-  signer: String!
+  timestamp: Date! @index
+  byteSize: Int! @index
+  appId: Int! @index
+  signer: String! @index
   fees: Float
-  feesPerMb: Float
+  feesPerMb: Float @index
+}
+
+type AccounToUpdateValue @entity {
+  id: ID!
+  accounts: [String]!
 }

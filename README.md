@@ -14,7 +14,7 @@ docker-compose pull
 docker-compose up --remove-orphans
 ```
 
-Or you can use this one-liner which will install dependencies and setup the the indexer after taking user inputs for websocket endpoint and genesis hash.
+Or you can use this one-liner which will install dependencies and setup the indexer after taking user inputs for websocket endpoint and genesis hash.
 ```bash
 curl -s https://raw.githubusercontent.com/availproject/avail-indexer/main/setup_indexer.sh -o setup_indexer.sh && bash setup_indexer.sh
 ``` 
@@ -55,7 +55,7 @@ For `Local network`:
 For `Local network` with docker:
 ```yaml
  genesisHash: '<local_chain_genesis_hash>'
- endpoint: 'ws://host.docker.internal:9944
+ endpoint: 'ws://host.docker.internal:9944'
 ```
 
 ## Run your project

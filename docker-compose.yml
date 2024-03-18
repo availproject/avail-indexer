@@ -18,7 +18,7 @@ services:
       retries: 5
 
   subquery-node:
-    image: onfinality/subql-node:v3.5.0
+    image: onfinality/subql-node:v3.5.3
     restart: always
     environment:
       DB_USER: postgres
@@ -29,16 +29,12 @@ services:
     volumes:
       - ./:/app
     command:
-      # - ${SUB_COMMAND} # set SUB_COMMAND env variable to "test" to run tests
       - -f=/app
       - --db-schema=avail-indexer
       - --unfinalized-blocks=false
       - --timeout=600000
-      - --workers=2
-      - --batch-size=2
-      - --disable-historical=true
-      # - --profiler
-      # - --unsafe
+      - --workers=4
+      - --batch-size=10
     healthcheck:
       test: ["CMD", "curl", "-f", "http://subquery-node:3000/ready"]
       interval: 10s
