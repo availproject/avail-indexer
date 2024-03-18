@@ -1,0 +1,18 @@
+ARG ALPINE_VERSION=3.16
+
+FROM node:18-alpine${ALPINE_VERSION} AS builder
+WORKDIR /build-stage
+ENV NODE_ENV=production
+COPY package*.json ./
+RUN npm install -g @subql/cli && npm ci
+# Copy the the files you need
+COPY . ./
+RUN npm run codegen && npm run build
+
+
+FROM onfinality/subql-node:v3.0.4 as runner
+WORKDIR /app
+COPY --from=builder /build-stage/dist /app/dist
+COPY --from=builder /build-stage/project.yaml /app
+COPY --from=builder /build-stage/schema.graphql /app
+COPY --from=builder /build-stage/types.json /app
