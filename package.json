@@ -20,12 +20,12 @@
   ],
   "author": "Leouarz",
   "devDependencies": {
-    "@subql/types": "3.3.1",
-    "@subql/testing": "2.1.0",
-    "@subql/node": "3.5.3",
     "@polkadot/api": "^10",
-    "typescript": "^5.3.3",
-    "@subql/cli": "4.2.6"
+    "@subql/cli": "^4.4.1",
+    "@subql/node": "^3.10.1",
+    "@subql/testing": "2.1.0",
+    "@subql/types": "3.3.1",
+    "typescript": "^5.3.3"
   },
   "resolutions": {
     "ipfs-unixfs": "6.0.6"
