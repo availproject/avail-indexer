@@ -19,11 +19,16 @@ jobs:
         run: |
             TAG=${GITHUB_REF#refs/tags/}
             echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Sets Digital Ocean Registry
+        id: sets_do_registry
+        run: |
+          echo "DO_REGISTRY=registry.digitalocean.com" >> "$GITHUB_OUTPUT"
       - name: Login to Dockerhub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ steps.sets_do_registry.outputs.DO_REGISTRY }}
+          username: ${{ secrets.DO_USER_EMAIL }}
+          password: ${{ secrets.DO_USER_TOKEN }}
       - name: Build and push images
         uses: docker/build-push-action@v5
         with:
@@ -32,4 +37,4 @@ jobs:
           file: ./docker/Dockerfile.release
           platforms: linux/amd64
           push: true
-          tags: availj/indexer:${{ steps.prepare.outputs.TAG }}
+          tags: ${{ steps.sets_do_registry.outputs.DO_REGISTRY }}/availj/indexer:${{ steps.prepare.outputs.TAG }}
