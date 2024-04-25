@@ -20,7 +20,7 @@ network:
   # chainId: "<local_chain_genesis_hash>"                                         # Local
   # chainId: "<local_chain_genesis_hash>"                                         # Local with Docker
   # endpoint:
-  #   ["wss://turing-rpc.avail.so"]                                               # Turing
+  #   ["wss://turing-rpc.avail.so/ws"]                                               # Turing
   #   ["wss://rpc-testnet.avail.tools/ws"]                                        # Goldberg
   #   ["ws://127.0.0.1:9944"]                                                     # Local
   #   ["ws://host.docker.internal:9944"]                                          # Local with Docker
