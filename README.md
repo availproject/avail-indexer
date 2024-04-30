@@ -19,6 +19,7 @@ To use the polkadot js temp fix for more than 65k events
 // In the same directory you cloned this repo
 git clone https://github.com/availproject/subql
 cd subql
+yarn build
 docker build -f packages/node/Dockerfile -t subquery-node-avail:latest .
 cd ..
 
@@ -30,8 +31,6 @@ npm run codegen
 npm run build
 docker-compose pull
 docker-compose -f docker-compose-fix.yml up --remove-orphans
-
-
 ```
 
 Or you can use this one-liner which will install dependencies and setup the indexer after taking user inputs for websocket endpoint and genesis hash.
