@@ -4,7 +4,7 @@ FROM node:18.20.2-alpine${ALPINE_VERSION} AS builder
 WORKDIR /build-stage
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm install -g @subql/cli && npm ci
+RUN npm install -g @subql/cli tslib && npm ci
 COPY . ./
 RUN npm run codegen && npm run build
 
