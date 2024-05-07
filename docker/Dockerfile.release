@@ -10,7 +10,7 @@ COPY . ./
 RUN npm run codegen && npm run build
 
 
-FROM onfinality/subql-node:v3.10.1 as runner
+FROM availj/subquery-node-avail:v4.3.0 as runner
 WORKDIR /app
 COPY --from=builder /build-stage/dist /app/dist
 COPY --from=builder /build-stage/project.yaml /app
