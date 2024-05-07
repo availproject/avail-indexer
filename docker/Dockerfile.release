@@ -5,10 +5,8 @@ WORKDIR /build-stage
 ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm install -g @subql/cli && npm ci
-# Copy the the files you need
 COPY . ./
 RUN npm run codegen && npm run build
-
 
 FROM availj/subquery-node-avail:v4.3.0 as runner
 WORKDIR /app
