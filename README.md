@@ -56,15 +56,15 @@ Although this is a working example SubQuery project, you can edit the SubQuery p
 
 SubQuery supports various layer-1 blockchain networks and provides [dedicated quick start guides](https://academy.subquery.network/quickstart/quickstart.html) as well as [detailed technical documentation](https://academy.subquery.network/build/introduction.html) for each of them.
 
-For `Goldberg network`:
+For `Mainnet`:
 ```yaml
- genesisHash: '0x6f09966420b2608d1947ccfb0f2a362450d1fc7fd902c29b67c906eaa965a7ae'
- endpoint: 'wss://rpc-testnet.avail.tools/ws'
+ genesisHash: '0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a'
+ endpoint: 'wss://mainnet-rpc.avail.so'
 ```
-For `Couscous network`:
+For `Turing network`:
 ```yaml
- genesisHash: '0x870e903076fe2bec249cc31fdb1b5717d89d0a0b6ae38241a58d6edeac5e1859'
- endpoint: 'wss://couscous-devnet.avail.tools/ws'
+ genesisHash: '0xd3d2f3a3495dc597434a99d7d449ebad6616db45e4e4f178f31cc6fa14378b70'
+ endpoint: 'wss://turing-rpc.avail.so/ws'
 ```
 For `Local network`:
 ```yaml
