@@ -26,11 +26,11 @@ network:
   #   ["ws://host.docker.internal:9944"]                                          # Local with Docker
   
   # The genesis hash of the network (hash of block 0)
-  chainId: "<blockhash>"
+  chainId: "0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a"
   endpoint:
-    ["<ws-endpoint>"]
+    ["wss://mainnet-rpc.avail.so/ws"]
   chaintypes:
-    file: ./types.json
+    file: ./dist/chaintypes.js
 dataSources:
   - kind: substrate/Runtime
     startBlock: 1

@@ -38,7 +38,11 @@ export const filteredOutEvents = [
   "system.ExtrinsicFailed",
 ]
 
-export async function handleBlock(block: SubstrateBlock): Promise<void> {
+export interface CorrectSubstrateBlock extends SubstrateBlock {
+  timestamp: Date;
+}
+
+export async function handleBlock(block: CorrectSubstrateBlock): Promise<void> {
   try {
     const blockNumber = block.block.header.number.toNumber()
     const blockNumberString = blockNumber.toString()
@@ -47,6 +51,10 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
     if (!dbBlock) {
       // Generic block
       if (ENABLE_LOG) logger.info(`Block handler: N°${blockNumberString}`)
+      // Override block timestamp
+      if (!block.timestamp){
+        block.timestamp = new Date()
+      }
       await blockHandler(block, specVersion)
 
       const events: Event[] = []
@@ -154,7 +162,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
   }
 }
 
-export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersion): Promise<void> => {
+export const blockHandler = async (block: CorrectSubstrateBlock, specVersion: SpecVersion): Promise<void> => {
   try {
     const blockHeader = block.block.header
     const blockRecord = new Block(
@@ -193,7 +201,7 @@ export function handleCall(
   } | undefined
 ): Extrinsic {
   try {
-    const block = extrinsic.block
+    const block = extrinsic.block as CorrectSubstrateBlock
     const ext = extrinsic.extrinsic
     const methodData = ext.method
     const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
@@ -272,7 +280,7 @@ export function handleDataSubmission(
     feeRounded?: number | undefined;
   } | undefined
 ): DataSubmission {
-  const block = extrinsic.block
+  const block = extrinsic.block as CorrectSubstrateBlock
   const ext = extrinsic.extrinsic
   const methodData = ext.method
 
