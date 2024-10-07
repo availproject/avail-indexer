@@ -7,7 +7,7 @@ import {
 } from "../utils/balances";
 import { extractAuthor } from "../utils/author";
 import { formatInspect } from "../utils/inspect";
-import { getFeesFromEvent } from "../utils/extrinsic";
+import { getFeesFromEvent, handleDaSubmission, handleVectorExecuteMessage, handleVectorSendMessage } from "../utils/extrinsic";
 import { AccounToUpdateValue } from "../types/models/AccounToUpdateValue";
 
 let specVersion: SpecVersion;
@@ -196,10 +196,19 @@ export function handleCall(
     const block = extrinsic.block
     const ext = extrinsic.extrinsic
     const methodData = ext.method
-    const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
-      methodData.args.map((a, i) => i === 0 ? a.toString().slice(0, 64) : a.toString())
+    const key = `${methodData.section}_${methodData.method}`
+    const argsValue = key === "dataAvailability_submitData" ?
+      // We handle the block differently
+      methodData.args.map((a, i) => i === 0 ? handleDaSubmission(a) : a.toString())
       :
-      methodData.args.map((a) => a.toString())
+      key === "vector_execute" ?
+        // We handle the parameter of index 1 of vector execute differently
+        methodData.args.map((a, i) => i === 1 ? handleVectorExecuteMessage(a) : a.toString())
+        : key === "vector_sendMessage" ?
+          // We handle the parameter of index 0 of vector send message differently
+          methodData.args.map((a, i) => i === 0 ? handleVectorSendMessage(a) : a.toString())
+          :
+          methodData.args.map((a) => a.toString())
 
     const extrinsicRecord = new Extrinsic(
       idx,
