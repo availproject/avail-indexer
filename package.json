@@ -23,7 +23,6 @@
     "@polkadot/api": "^12",
     "@subql/cli": "^5.2.4",
     "@subql/node": "^5.2.3",
-    "@subql/testing": "latest",
     "@subql/types": "3.11.2",
     "typescript": "^5.3.3"
   },

@@ -38,6 +38,8 @@ export const filteredOutEvents = [
   "system.ExtrinsicFailed",
 ]
 
+// Set timestamp as mandatory, since in `SubstrateBlock` timestamp is now an optional field.
+// For us, it will never be empty and this is only to satisfy the compiler.
 export interface CorrectSubstrateBlock extends SubstrateBlock {
   timestamp: Date;
 }
@@ -51,10 +53,6 @@ export async function handleBlock(block: CorrectSubstrateBlock): Promise<void> {
     if (!dbBlock) {
       // Generic block
       if (ENABLE_LOG) logger.info(`Block handler: N°${blockNumberString}`)
-      // Override block timestamp
-      if (!block.timestamp){
-        block.timestamp = new Date()
-      }
       await blockHandler(block, specVersion)
 
       const events: Event[] = []
