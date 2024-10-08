@@ -944,7 +944,7 @@
     lodash "^4.17.21"
     reflect-metadata "^0.1.14"
 
-"@subql/testing@2.2.1", "@subql/testing@latest":
+"@subql/testing@2.2.1":
   version "2.2.1"
   resolved "https://registry.npmjs.org/@subql/testing/-/testing-2.2.1.tgz"
   integrity sha512-D77qRFmXxGclOiD9dJF9kD1DXHeODa/SS2N93Ht33lY8Efx6fG3vacnSwM9wgyv42kwbpqtynoT++wfsi4bzlw==
