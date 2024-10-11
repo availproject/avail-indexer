@@ -38,7 +38,13 @@ export const filteredOutEvents = [
   "system.ExtrinsicFailed",
 ]
 
-export async function handleBlock(block: SubstrateBlock): Promise<void> {
+// Set timestamp as mandatory, since in `SubstrateBlock` timestamp is now an optional field.
+// For us, it will never be empty and this is only to satisfy the compiler.
+export interface CorrectSubstrateBlock extends SubstrateBlock {
+  timestamp: Date;
+}
+
+export async function handleBlock(block: CorrectSubstrateBlock): Promise<void> {
   try {
     const blockNumber = block.block.header.number.toNumber()
     const blockNumberString = blockNumber.toString()
@@ -154,7 +160,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
   }
 }
 
-export const blockHandler = async (block: SubstrateBlock, specVersion: SpecVersion): Promise<void> => {
+export const blockHandler = async (block: CorrectSubstrateBlock, specVersion: SpecVersion): Promise<void> => {
   try {
     const blockHeader = block.block.header
     const blockRecord = new Block(
@@ -193,7 +199,7 @@ export function handleCall(
   } | undefined
 ): Extrinsic {
   try {
-    const block = extrinsic.block
+    const block = extrinsic.block as CorrectSubstrateBlock
     const ext = extrinsic.extrinsic
     const methodData = ext.method
     const argsValue = `${methodData.section}_${methodData.method}` === "dataAvailability_submitData" ?
@@ -272,7 +278,7 @@ export function handleDataSubmission(
     feeRounded?: number | undefined;
   } | undefined
 ): DataSubmission {
-  const block = extrinsic.block
+  const block = extrinsic.block as CorrectSubstrateBlock
   const ext = extrinsic.extrinsic
   const methodData = ext.method
 

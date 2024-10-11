@@ -8,7 +8,7 @@ RUN npm install -g @subql/cli && npm ci
 COPY . ./
 RUN npm run codegen && npm run build
 
-FROM availj/subquery-node-avail:v4.3.0 as runner
+FROM onfinality/subql-node:v5.2.3 as runner
 WORKDIR /app
 COPY --from=builder /build-stage/dist /app/dist
 COPY --from=builder /build-stage/project.yaml /app
