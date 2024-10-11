@@ -1,3 +1,5 @@
+import { BN } from 'bn.js';
+import { Codec } from '@polkadot/types/types'
 import { SubstrateExtrinsic } from "@subql/types"
 import { roundPrice } from "."
 
@@ -55,4 +57,28 @@ export const shouldGetFees = (module: string): boolean => {
         'authorship'
     ]
     return !ignoreModules.includes(module)
+}
+
+export const handleDaSubmission = (data: Codec) => {
+    return data.toString().slice(0, 64)
+}
+
+export const handleVectorExecuteMessage = (message: Codec) => {
+    let newArg: { message: { fungibleToken?: { assetId: `0x${string}`, amount: number | `0x${string}` } } } = message.toJSON() as any
+    if (newArg.message.fungibleToken && !newArg.message.fungibleToken.amount.toString().startsWith('0x')) {
+        newArg.message.fungibleToken.amount = `0x${new BN(newArg.message.fungibleToken.amount.toString()).toString('hex')}`
+        return JSON.stringify(newArg)
+    } else {
+        return message.toString()
+    }
+}
+
+export const handleVectorSendMessage = (message: Codec) => {
+    let newArg: { fungibleToken?: { assetId: `0x${string}`, amount: number | `0x${string}` } } = message.toJSON() as any
+    if (newArg.fungibleToken && !newArg.fungibleToken.amount.toString().startsWith('0x')) {
+        newArg.fungibleToken.amount = `0x${new BN(newArg.fungibleToken.amount.toString()).toString('hex')}`
+        return JSON.stringify(newArg)
+    } else {
+        return message.toString()
+    }
 }
