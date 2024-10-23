@@ -21,8 +21,8 @@
   "author": "Leouarz",
   "devDependencies": {
     "@polkadot/api": "^12",
-    "@subql/cli": "^5.2.4",
-    "@subql/node": "^5.2.3",
+    "@subql/cli": "5.2.8",
+    "@subql/node": "5.2.7",
     "@subql/types": "3.11.2",
     "typescript": "^5.3.3"
   },
