@@ -6,12 +6,30 @@
 
 ## Tl;Dr
 ```bash
-npm install -g @subql/cli@5.2.8
+npm install -g @subql/cli
 npm install
 npm run codegen
 npm run build
 docker-compose pull
 docker-compose up --remove-orphans
+```
+
+To use the polkadot js temp fix for more than 65k events
+```
+// In the same directory you cloned this repo
+git clone https://github.com/availproject/subql
+cd subql
+yarn build
+docker build -f packages/node/Dockerfile -t subquery-node-avail:latest .
+cd ..
+// Then use the custom docker-compose file
+cd avail-indexer
+npm install -g @subql/cli
+npm install
+npm run codegen
+npm run build
+docker-compose pull
+docker-compose -f docker-compose-fix.yml up --remove-orphans
 ```
 
 Or you can use this one-liner which will install dependencies and setup the indexer after taking user inputs for websocket endpoint and genesis hash.
@@ -21,7 +39,7 @@ curl -s https://raw.githubusercontent.com/availproject/avail-indexer/main/setup_
 
 ## Start
 
-First, install SubQuery CLI globally on your terminal by using NPM `npm install -g @subql/cli@5.2.8`
+First, install SubQuery CLI globally on your terminal by using NPM `npm install -g @subql/cli`
 
 You can either clone this GitHub repo, or use the `subql` CLI to bootstrap a clean project in the network of your choosing by running `subql init` and following the prompts.
 
