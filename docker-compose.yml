@@ -18,7 +18,7 @@ services:
       retries: 5
 
   subquery-node:
-    image: onfinality/subql-node:v5.2.7
+    image: onfinality/subql-node:v5.2.2
     restart: always
     environment:
       DB_USER: postgres
