@@ -13,4 +13,3 @@ WORKDIR /app
 COPY --from=builder /build-stage/dist /app/dist
 COPY --from=builder /build-stage/project.yaml /app
 COPY --from=builder /build-stage/schema.graphql /app
-COPY --from=builder /build-stage/types.json /app
