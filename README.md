@@ -4,7 +4,7 @@
 
 **This SubQuery project indexes all asset transfers using the balances pallet on the Polkadot Network**
 
-## Tl;Dr
+## TL;DR
 ```bash
 npm install -g @subql/cli@5.2.8
 npm install
