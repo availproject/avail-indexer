@@ -13,7 +13,11 @@ type AccountData = {
 
 export const updateAccounts = async (addresses: string[], timestamp: Date) => {
     try {
-        const accountsInDb: AccountEntity[] = await store.getByFields("AccountEntity", [["id", "in", addresses]])
+        const accountsInDb: AccountEntity[] = await store.getByFields(
+            "AccountEntity",
+            [["id", "in", addresses]],
+            { limit: 100 }
+          );
         const accountsToCreate: AccountEntity[] = []
         const accountsToUpdate: AccountEntity[] = []
         const res = await api.query.system.account.multi(addresses) as any

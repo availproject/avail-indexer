@@ -93,6 +93,11 @@ export async function handleBlock(block: CorrectSubstrateBlock): Promise<void> {
               relatedExtrinsicIndex !== -1 ? `${blockNumber}-${relatedExtrinsicIndex}` : "",
               idx
             ))
+            const [fromRaw, toRaw, _] = evt.event.data
+            const from = fromRaw.toString()
+            const to = toRaw.toString()
+            if (!accountToUpdate.includes(from)) accountToUpdate.push(from)
+            if (!accountToUpdate.includes(to)) accountToUpdate.push(to)
           }
         }
 
@@ -130,7 +135,7 @@ export async function handleBlock(block: CorrectSubstrateBlock): Promise<void> {
         accountToUpdateValue = new AccounToUpdateValue("0", [])
       }
       accountToUpdateValue.accounts = [...new Set([...accountToUpdateValue.accounts, ...accountToUpdate])]
-      if (accountToUpdateValue.accounts.length > 250 || (accountToUpdateValue.accounts.length > 0 && blockNumber % 50 === 0)) {
+      if (accountToUpdateValue.accounts.length >= 100 || (accountToUpdateValue.accounts.length > 0 && blockNumber % 50 === 0)) {
         const accounts = await updateAccounts(accountToUpdateValue.accounts, block.timestamp)
         await Promise.all([
           store.bulkCreate('AccountEntity', accounts.accountsToCreate),
@@ -429,7 +434,11 @@ export const handleExtension = async (blockHeader: Header) => {
 }
 
 export const setAccountsAsValidators = async (accounts: string[]) => {
-  const accountsInDb: AccountEntity[] = await store.getByFields("AccountEntity", [["id", "in", accounts]])
+  const accountsInDb: AccountEntity[] = await store.getByFields(
+    "AccountEntity",
+    [["id", "in", accounts]],
+    { limit: 100 }
+  );
   const accountsToSave = accountsInDb.map(x => {
     x.validator = true
     x.validatorSessionParticipated = (x.validatorSessionParticipated || 0) + 1
