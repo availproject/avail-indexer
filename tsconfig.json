@@ -6,10 +6,11 @@
     "declaration": true,
     "importHelpers": true,
     "resolveJsonModule": true,
-    "module": "commonjs",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "outDir": "dist",
     "rootDir": "src",
-    "target": "es2017",
+    "target": "es2020",
     "strict": true
   },
   "include": ["src/**/*", "node_modules/@subql/types/dist/global.d.ts", "node_modules/@subql/types-core/dist/global.d.ts"]

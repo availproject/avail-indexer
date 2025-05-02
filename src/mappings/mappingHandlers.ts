@@ -10,8 +10,8 @@ import { formatInspect } from "../utils/inspect";
 import { getFeesFromEvent, handleDaSubmission, handleVectorExecuteMessage, handleVectorSendMessage } from "../utils/extrinsic";
 import { AccounToUpdateValue } from "../types/models/AccounToUpdateValue";
 
-let specVersion: SpecVersion;
-const ENABLE_LOG = true
+let specVersion: SpecVersion | null = null;
+const ENABLE_LOG = false
 
 export const balanceEvents = [
   "balances.BalanceSet",
@@ -165,7 +165,7 @@ export async function handleBlock(block: CorrectSubstrateBlock): Promise<void> {
   }
 }
 
-export const blockHandler = async (block: CorrectSubstrateBlock, specVersion: SpecVersion): Promise<void> => {
+export const blockHandler = async (block: CorrectSubstrateBlock, specVersion: SpecVersion | null): Promise<void> => {
   try {
     const blockHeader = block.block.header
     const blockRecord = new Block(
@@ -372,7 +372,7 @@ export const updateSession = async (blockRecord: Block, digest: Digest) => {
   }
 }
 
-export const updateSpecversion = async (specVersion: SpecVersion, blockSpecVersion: number, blockNumber: bigint) => {
+export const updateSpecversion = async (specVersion: SpecVersion | null, blockSpecVersion: number, blockNumber: bigint) => {
   if (!specVersion) {
     let dbSpec = await SpecVersion.get(blockSpecVersion.toString());
     if (dbSpec) specVersion = dbSpec

@@ -14,7 +14,7 @@ git pull
 # Install @subql/cli globally if not already installed
 if ! command -v subql &> /dev/null; then
   echo "@subql/cli is not installed. Installing @subql/cli..."
-  npm install -g @subql/cli@5.2.8
+  npm install -g @subql/cli@5.8.1
 fi
 
 # Install npm dependencies
