@@ -91,8 +91,7 @@ export async function handleBlock(block: CorrectSubstrateBlock): Promise<void> {
               blockHash,
               block.timestamp,
               relatedExtrinsicIndex !== -1 ? `${blockNumber}-${relatedExtrinsicIndex}` : "",
-              idx
-            ))
+              idx, relatedExtrinsicIndex !== -1 ? block.block.extrinsics[relatedExtrinsicIndex].hash.toString() : ""))
             const [fromRaw, toRaw, _] = evt.event.data
             const from = fromRaw.toString()
             const to = toRaw.toString()

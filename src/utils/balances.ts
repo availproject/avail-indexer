@@ -82,20 +82,30 @@ export const updateAccounts = async (addresses: string[], timestamp: Date) => {
     }
 }
 
-export const transferHandler = (event: EventRecord, blockId: string, blockHash: string, timestamp: Date, extrinsicIndex: string, eventIndex: number) => {
+export const transferHandler = (
+    event: EventRecord,
+    blockId: string,
+    blockHash: string,
+    timestamp: Date,
+    extrinsicId: string,
+    eventIndex: number,
+    txHash: string,
+) => {
     const [from, to, amount] = event.event.data
-    const formattedAmount = !(typeof amount === "string") ? (amount as Balance).toBigInt().toString() : amount
+    const formattedAmount = typeof amount === "string" ? amount : (amount as Balance).toBigInt().toString()
+
     const record = new TransferEntity(
         `${blockId}-${eventIndex}`,
         blockId,
         blockHash,
-        extrinsicIndex,
+        extrinsicId,
         timestamp,
         from.toString(),
         to.toString(),
         "AVL",
         formattedAmount,
-        roundPrice(formattedAmount)
+        roundPrice(formattedAmount),
+        txHash,
     )
     return record
 }
