@@ -102,6 +102,7 @@ type TransferEntity @entity {
   currency: String!
   amount: String!
   amountRounded: Float! @index
+  txHash: String! @index 
 }
 
 type AccountEntity @entity {
