@@ -102,7 +102,7 @@ export const transferHandler = (
         timestamp,
         from.toString(),
         to.toString(),
-        "AVL",
+        "AVAIL",
         formattedAmount,
         roundPrice(formattedAmount),
         txHash,
