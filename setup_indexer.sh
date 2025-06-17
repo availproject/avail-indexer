@@ -33,7 +33,7 @@ fi
 # Check if subql package is installed and install it if not
 if ! command -v subql &> /dev/null; then
   echo "@subql/cli is not installed. Installing @subql/cli..."
-  sudo npm install -g @subql/cli@5.2.8
+  sudo npm install -g @subql/cli@5.8.1
 fi
 
 # Check if docker is installed and install it if not
