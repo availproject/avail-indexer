@@ -93,7 +93,7 @@ export const transferHandler = (event: EventRecord, blockId: string, blockHash: 
         timestamp,
         from.toString(),
         to.toString(),
-        "AVL",
+        "AVAIL",
         formattedAmount,
         roundPrice(formattedAmount)
     )
