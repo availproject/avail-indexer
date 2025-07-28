@@ -28,6 +28,7 @@
     "@subql/node": "6.0.2",
     "@subql/types": "3.12.1",
     "@subql/types-core": "2.1.1",
+    "assert": "^2.1.0",
     "bn.js": "^5.2.1",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"
