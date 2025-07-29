@@ -357,7 +357,7 @@ export const updateSession = async (blockRecord: Block, digest: Digest) => {
     const sessionId = await api.query.session.currentIndex()
     let sessionRecord = await Session.get(sessionId.toString())
     if (!sessionRecord) {
-      const validators = (await api.query.session.validators()) as unknown as string[]
+      const validators = (await api.query.session.validators()).toJSON() as string[]
       sessionRecord = new Session(sessionId.toString(), validators.map(x => x.toString()))
       await sessionRecord.save()
       await setAccountsAsValidators(validators)
@@ -365,6 +365,7 @@ export const updateSession = async (blockRecord: Block, digest: Digest) => {
     blockRecord.sessionId = Number(sessionRecord.id)
     const author = extractAuthor(digest, sessionRecord.validators as unknown as AccountId[])
     blockRecord.author = author ? author.toString() : undefined
+    if (ENABLE_LOG) logger.info("Session updated correctly")
   } catch (err) {
     logger.error('update session error');
     logger.error('update session error detail:' + err);
@@ -436,7 +437,7 @@ export const setAccountsAsValidators = async (accounts: string[]) => {
   const accountsInDb: AccountEntity[] = await store.getByFields(
     "AccountEntity",
     [["id", "in", accounts]],
-    { limit: 100 }
+    { limit: 10000 }
   );
   const accountsToSave = accountsInDb.map(x => {
     x.validator = true

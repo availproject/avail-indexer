@@ -65,7 +65,7 @@ export const updateAccounts = async (addresses: string[], timestamp: Date) => {
                     accountsToUpdate.push(record)
                 }
             } else {
-                logger.warning("Error in update account : Balance not found")
+                logger.info("Error in update account : Balance not found, skipping")
             }
         })
         return {

@@ -33,8 +33,8 @@ services:
       - --db-schema=avail-indexer
       - --unfinalized-blocks=false
       - --timeout=600000
-      - --workers=4
-      - --batch-size=10
+      - --batch-size=100
+      - --query-limit=10000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://subquery-node:3000/ready"]
       interval: 10s
