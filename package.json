@@ -36,7 +36,11 @@
     "typescript": "^5.3.3"
   },
   "resolutions": {
-    "ipfs-unixfs": "6.0.6"
+    "ipfs-unixfs": "6.0.6",
+    "axios": "^1.15.0"
+  },
+  "overrides": {
+    "axios": "^1.15.0"
   },
   "exports": {
     "chaintypes": "./src/chaintypes.ts"
