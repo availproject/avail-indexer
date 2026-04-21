@@ -30,7 +30,7 @@ jobs:
           username: ${{ secrets.DO_USER_EMAIL }}
           password: ${{ secrets.DO_USER_TOKEN }}
       - name: Build and push images
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
