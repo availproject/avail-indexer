@@ -42,7 +42,7 @@ services:
       retries: 10
 
   graphql-engine:
-    image: onfinality/subql-query:v2.22.0
+    image: onfinality/subql-query:v2.22.2
     ports:
       - 3000:3000
     restart: always
